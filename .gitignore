@@ -38,5 +38,10 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# all files preceded by underscore ############################
+# all files preceded by underscore ##############################
 _*
+
+# all unmodified data files (to protect coordinates) ############
+data/
+data_contributed/
+data_raw/
