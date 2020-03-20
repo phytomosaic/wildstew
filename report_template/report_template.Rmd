@@ -1,0 +1,92 @@
+---
+title:  "Wilderness Stewardship Performance: A Reporting Template"
+output:
+  # word_document:
+  #     reference_docx: style_template.docx
+  pdf_document:
+    keep_tex: false
+    toc: no
+    latex_engine: pdflatex
+    fig_caption: yes
+# bibliography: ./div_bib.bib
+# csl: C:/Users/Rob/Zotero/styles/ecology.csl
+fontsize: 10pt
+header-includes:
+- \usepackage{sectsty}
+# - \allsectionsfont{\normalfont\scshape}
+- \sectionfont{\normalfont\scshape}
+- \paragraphfont{\itshape}
+- \subparagraphfont{\itshape}
+- \usepackage{hyperref} \hypersetup{pdfstartview={XYZ null null 1.00}, colorlinks = true, linkcolor = red, urlcolor = red}
+# - \usepackage[modulo]{lineno}
+# - \linenumbers    ### <- if line numbers required
+# linestretch: 2    ### <- if double-spacing required
+- \usepackage{caption} \captionsetup[figure]{font=footnotesize}
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+### setup table options
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+require(kableExtra, quietly = TRUE)
+options(kableExtra.auto_format = FALSE)
+
+### get list of bibliographic entry KEYS, to use throughout
+# print(sort(unname(unlist(bibtex::read.bib('./ms/div_bib.bib')$key))))
+
+# ### load the database
+# require(wildstew)
+# data(d, package='wildstew', verbose=TRUE)
+# load('./data/d.rda', verbose=TRUE)
+
+```
+
+\large Robert J. Smith^1^* and Linda Geiser^2^
+
+\normalsize
+
+1.  ORISE Postdoctoral Fellow, USDA Forest Service, Air Resource Management, Washington, DC, 20250.
+1.  Program Leader, USDA Forest Service, Air Resource Management, Washington, DC, 20250.
+
+
+# Why
+
+Each Wilderness area managed by the USDA Forest Service is required to report annually on progress toward “wildernesses meeting baseline performance for preserving wilderness character”, otherwise known as Wilderness Stewardship Performance (WSP).  Among other elements, managers may report on Wilderness Air Quality Values (WAQVs) as a marker of natural quality of Wilderness character (WSP Guidebook 2020).  However, until now we have lacked a common template for nationally consistent, accurate, and timely reporting of WAQVs.  Here, we provide such a template to streamline annual WSP reporting for WAQVs based on lichen Critical Loads (CLs).
+
+
+# What
+
+WAQVs are supported by monitoring changes in “sensitive receptors” such as epiphytic lichens, which are negatively impacted by air pollutants, and which therefore may serve as indicators of changing conditions.  Workers have long ago established relationships between lichen tissue elemental content and the atmospheric deposition of pollutants such as oxidized nitrogen (NOx), reduced nitrogen (NHx) and oxidized sulfur (SOx).  Each lichen species also has a unique and individualistic tolerance to pollutants, and their collective responses are far more robust than any single species alone.  
+
+Because of their individualistic responses, each lichen species has been assigned a value describing the pollutant deposition at which the species most frequently occurs (derived from nationally-consistent FHM/FIA surveys).  For WSP reporting, the measurable “sensitive receptor indicator” is then the community-weighted mean of these peak values across all epiphytic lichen species in a site, otherwise known as the community “air score”.  The air score describes the collective pollution tolerance of all species in a site.  This is a much better indicator than species richness because it depends only on atmospheric deposition (not on other factors like disturbance or dispersal limitation that might restrict the number of species).  
+
+
+# Example template:
+     
+1.	Wilderness name
+2.	Preparing agent
+3.	Summary of scores (percentile? Absolute value? CL?)
+     1.	Includes frequency distribution of site scores
+4.	Sampling period
+5.	Brief explanation of lichen-based method for determining WAQVs
+6.	Baseline CL
+7.	Trends in CL (if more than one sampling round)
+8.	Number of samples involved (disaggregated by on/off Wilderness)
+9.	Brief verbal description of WAQV situation (1 paragraph).
+10.	Ecosystem functions: Many rare spp? Many forage lichens? 
+11.	Lichen species list and each air score (NOx, NHx, SOx).
+12. Postage-stamp map of Wilderness area?
+
+
+<!-- Question I currently have: -->
+<!--      CL based on community air scores? -->
+<!--      How nearby can we use external plots? -->
+<!--      What to do if air score not yet calculated? In wilderness? -->
+<!--      Make it multi-attribute! -->
+
+
+<!-- For each 1) Wilderness area and 2) timestep (baseline or trend): -->
+<!-- Estimate CL exceedance/safety margin -->
+<!-- If (2 timesteps) then summarize trend (delta-CL). -->
+<!-- Base CL on lichen richness or lichen air scores? -->
+     
