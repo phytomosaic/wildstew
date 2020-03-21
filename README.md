@@ -9,7 +9,7 @@ Support tools for Wilderness stewardship based on air quality information.
 
 ## Why
 
-TODO.
+Each Wilderness area managed by the USDA Forest Service is required to report annually on progress toward “wildernesses meeting baseline performance for preserving wilderness character”, otherwise known as Wilderness Stewardship Performance (WSP).  Among other elements, managers may report on Wilderness Air Quality Values (WAQVs) as a marker of natural quality of Wilderness character.  However, until now we have lacked a common template for nationally consistent, accurate, and timely reporting of WAQVs.  Here, we provide such a template to streamline annual WSP reporting for WAQVs based on lichen attributes.
 
 
 ## Installation
