@@ -56,9 +56,19 @@ Each Wilderness area managed by the USDA Forest Service is required to report an
 
 # What
 
-WAQVs are supported by monitoring changes in “sensitive receptors” such as epiphytic lichens, which are negatively impacted by air pollutants, and which therefore may serve as indicators of changing conditions.  Workers have long ago established relationships between lichen tissue elemental content and the atmospheric deposition of pollutants such as oxidized nitrogen (NOx), reduced nitrogen (NHx) and oxidized sulfur (SOx).  Each lichen species also has a unique and individualistic tolerance to pollutants, and their collective responses are far more robust than any single species alone.  
+WAQVs are supported by monitoring changes in “sensitive receptors” such as epiphytic macrolichens, which are negatively impacted by air pollutants, and which therefore may serve as indicators of changing conditions.  Workers have long ago established relationships between lichen tissue elemental content and the atmospheric deposition of pollutants such as oxidized nitrogen (NOx), reduced nitrogen (NHx) and oxidized sulfur (SOx).  Each lichen species also has a unique and individualistic tolerance to pollutants, and their collective responses are far more robust than any single species alone.  
 
-Because of their individualistic responses, each lichen species has been assigned a value describing the pollutant deposition at which the species most frequently occurs (derived from nationally-consistent FHM/FIA surveys).  For WSP reporting, the measurable “sensitive receptor indicator” is then the community-weighted mean of these peak values across all epiphytic lichen species in a site, otherwise known as the community “air score”.  The air score describes the collective pollution tolerance of all species in a site.  This is a much better indicator than species richness because it depends only on atmospheric deposition (not on other factors like disturbance or dispersal limitation that might restrict the number of species).  
+# Indicators
+
+For WSP reporting of air quality, measurable “sensitive receptor indicators” can be determined by the presence and abundance of lichen species in sampled sites.  Nationally-consistent FHM/FIA surveys of lichen communities let us score and classify species by their relative pollution tolerance, and to calculate community metrics across all species at a site.  Community metrics are more robust than tracking single species because of redundancy: the absence of a single species offers only weak evidence of air quality (what if the species simply wasn't able to disperse to that site? what if local microclimates were too harsh?), but the joint absence of an entire collection of species known to be pollution-intolerant would provide much stronger evidence of air-quality impacts.  The following two kinds of lichen-based score can describe patterns of atmospheric deposition.  
+
+## Air scores
+
+Individual species' sensitivities were calculated as the value of total N or total S deposition (kg ha^-1^ y^-1^) at which the species was most frequently detected.  Air scores for each site were then calculated as the community-weighted mean of individual species' sensitivities, for all species present.  Therefore, the site air score represents the collective pollution tolerance of co-occurring species: "clean" sites should exhibit relatively low air scores driven by pollution-intolerant species, while "polluted" sites will have higher air scores driven by pollution-tolerant species.  Air score units are kg ha^-1^ y^-1^ for N or S.
+
+## Trophic scores
+
+Lichen species can be assigned to three main groups based on pollution tolerance; from low- to high-tolerance, these are oligotrophic, mesotrophic, eutrophic.  Sites can be scored by a ratio describing the number of oligotrophic species compared to the total number of oligotrophic and eutrophic species.  By this metric, "clean" sites will have relatively high trophic score (maximum = 1) driven by many pollution-intolerant species, while "polluted" sites will have relatively lower trophic scores (minimum = 0) driven by their absence. Tropic scores are unitless and range from 0--1 for N or S.
 
 
 # Example template:
@@ -76,17 +86,3 @@ Because of their individualistic responses, each lichen species has been assigne
 10.	Ecosystem functions: Many rare spp? Many forage lichens? 
 11.	Lichen species list and each air score (NOx, NHx, SOx).
 12. Postage-stamp map of Wilderness area?
-
-
-<!-- Question I currently have: -->
-<!--      CL based on community air scores? -->
-<!--      How nearby can we use external plots? -->
-<!--      What to do if air score not yet calculated? In wilderness? -->
-<!--      Make it multi-attribute! -->
-
-
-<!-- For each 1) Wilderness area and 2) timestep (baseline or trend): -->
-<!-- Estimate CL exceedance/safety margin -->
-<!-- If (2 timesteps) then summarize trend (delta-CL). -->
-<!-- Base CL on lichen richness or lichen air scores? -->
-     
