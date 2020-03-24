@@ -1,0 +1,89 @@
+---
+title: |
+   | Wilderness Air Quality Values  
+   | for
+   | `r input$x`
+output: 
+  pdf_document:
+     keep_tex: false
+     toc: no
+     latex_engine: pdflatex
+     fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(kableExtra, quietly = TRUE)
+```
+
+# For Wilderness Area
+
+Wilderness Stewardship Performance for: `r input$x`
+
+Prepared on: \small \textsc{`r format(Sys.time(), "%d %b %Y")`} \normalsize
+
+```{r years, echo=FALSE}
+rng <- get_years(ii = r_wname())
+```
+
+Lichen sampling for `r input$x` covers the years: `r rng[1]` to `r rng[2]`.
+
+
+# Trends over time
+
+```{r plot, fig.height=4, echo=FALSE}
+set_par(1)
+plot_trend(ii = r_wname())
+```
+
+# Table
+```{r table, echo=FALSE}
+
+   print(get_table(ii = r_wname()))
+
+```
+
+
+
+
+\newpage
+
+# Further information
+
+## Why
+
+Each Wilderness area managed by the USDA Forest Service is required to report annually on progress toward “wildernesses meeting baseline performance for preserving wilderness character”, otherwise known as Wilderness Stewardship Performance (WSP).  Among other elements, managers may report on Wilderness Air Quality Values (WAQVs) as a marker of natural quality of Wilderness character (WSP Guidebook 2020).  However, until now we have lacked a common template for nationally consistent, accurate, and timely reporting of WAQVs.  Here, we provide such a template to streamline annual WSP reporting for WAQVs based on lichen Critical Loads (CLs).
+
+
+## What
+
+WAQVs are supported by monitoring changes in “sensitive receptors” such as epiphytic macrolichens, which are negatively impacted by air pollutants, and which therefore may serve as indicators of changing conditions.  Workers have long ago established relationships between lichen tissue elemental content and the atmospheric deposition of pollutants such as oxidized nitrogen (NOx), reduced nitrogen (NHx) and oxidized sulfur (SOx).  Each lichen species also has a unique and individualistic tolerance to pollutants, and their collective responses are far more robust than any single species alone.  
+
+## Indicators
+
+For WSP reporting of air quality, measurable “sensitive receptor indicators” can be determined by the presence and abundance of lichen species in sampled sites.  Nationally-consistent FHM/FIA surveys of lichen communities let us score and classify species by their relative pollution tolerance, and to calculate community metrics across all species at a site.  Community metrics are more robust than tracking single species because of redundancy: the absence of a single species offers only weak evidence of air quality (what if the species simply wasn't able to disperse to that site? what if local microclimates were too harsh?), but the joint absence of an entire collection of species known to be pollution-intolerant would provide much stronger evidence of air-quality impacts.  The following two kinds of lichen-based score can describe patterns of atmospheric deposition.  
+
+### Air scores
+
+Individual species' sensitivities were calculated as the value of total N or total S deposition (kg ha^-1^ y^-1^) at which the species was most frequently detected.  Air scores for each site were then calculated as the community-weighted mean of individual species' sensitivities, for all species present.  Therefore, the site air score represents the collective pollution tolerance of co-occurring species: "clean" sites should exhibit relatively low air scores driven by pollution-intolerant species, while "polluted" sites will have higher air scores driven by pollution-tolerant species.  Air score units are kg ha^-1^ y^-1^ for N or S.
+
+### Trophic scores
+
+Lichen species can be assigned to three main groups based on pollution tolerance; from low- to high-tolerance, these are oligotrophic, mesotrophic, eutrophic.  Sites can be scored by a ratio describing the number of oligotrophic species compared to the total number of oligotrophic and eutrophic species.  By this metric, "clean" sites will have relatively high trophic score (maximum = 1) driven by many pollution-intolerant species, while "polluted" sites will have relatively lower trophic scores (minimum = 0) driven by their absence. Tropic scores are unitless and range from 0--1 for N or S.
+
+
+# Example template:
+     
+1.	Wilderness name
+2.	Preparing agent
+3.	Summary of scores (percentile? Absolute value? CL?)
+     1.	Includes frequency distribution of site scores
+4.	Sampling period
+5.	Brief explanation of lichen-based method for determining WAQVs
+6.	Baseline CL
+7.	Trends in CL (if more than one sampling round)
+8.	Number of samples involved (disaggregated by on/off Wilderness)
+9.	Brief verbal description of WAQV situation (1 paragraph).
+10.	Ecosystem functions: Many rare spp? Many forage lichens? 
+11.	Lichen species list and each air score (NOx, NHx, SOx).
+12. Postage-stamp map of Wilderness area?
