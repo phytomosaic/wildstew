@@ -1,24 +1,36 @@
+######################################################################
+#
+#  Wilderness Stewardship Performance:
+#      Shiny app for automagically generated WSP reports
+#
+#    Rob Smith, phytomosaic@gmail.com, 16 Apr 2020
+#
+##      GNU General Public License, Version 3.0    ###################
 
+require(shiny)
+require(rmarkdown)
+require(knitr)
+load('d.rda', verbose=T)  # data in same directory as app.R
+load('a.rda', verbose=T)  # data in same directory as app.R
+load('s.rda', verbose=T)  # data in same directory as app.R
+choices <- sort(unique(as.character(a$warea)))
 
-### app for automagically generated WSP reports
-# see: https://shiny.rstudio.com/gallery/download-knitr-reports.html
-library(shiny)
-library(rmarkdown)
-# source('./_makefiles/00_data-processing.R')
-wnames <- sort(unique(as.character(a$warea)))
-
-### function to plot trends of each WA
-`plot_trend` <- function (ii, iy, addtitle=TRUE, ...) {
-        if (missing(iy)) iy <- 'n_scr'
-        y    <- a[a$warea==ii,paste0(iy, '_mean')]
-        ysd  <- a[a$warea==ii,paste0(iy, '_sd')]
-        yn   <- a[a$warea==ii,paste0(iy, '_n')]
-        x    <- a[a$warea==ii,'year']
+### functions setup
+`plot_trend` <- function (pick, yvar, ylab, addtitle=FALSE, ...) {
+        if (missing(yvar)) yvar <- 'n_airscore'
+        y    <- a[a$warea==pick, paste0(yvar, '.mean')]
+        ysd  <- a[a$warea==pick, paste0(yvar, '.sd')]
+        yn   <- a[a$warea==pick, paste0(yvar, '.n')]
+        x    <- a[a$warea==pick,'year']
         ylm  <- c(min(c(y, y - ysd), na.rm=T) - 0.4,
                   max(c(y, y + ysd), na.rm=T) + 0.1)
         if (all(is.infinite(ylm))) return(NULL)
         if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
-        ylb <- expression(Lichen~N~score~(kg~N~ha^'-1'~y^'-1'))
+        if (missing(ylab)) {
+                ylb <- expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))
+        } else {
+                ylb <- ylab
+        }
         plot(x, y, pch=16, ylab=ylb, xlab='Year', ylim=ylm, ...)
         `se` <- function(x, yval, se, wiskwidth=0.4) {
                 w <- wiskwidth/2
@@ -28,41 +40,29 @@ wnames <- sort(unique(as.character(a$warea)))
         }
         se(x, y, ysd)
         text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2)
-        if (addtitle) title(ii)
+        if (addtitle) title(pick)
 }
-`get_years` <- function (ii, ...) {
-        rng <- range(a[a$warea==ii,'year'], na.rm=TRUE)
+`get_years` <- function (pick, ...) {
+        rng <- range(a[a$warea==pick, 'year'], na.rm=TRUE)
         if (any(!is.finite(rng))) c(NA,NA) else rng
 }
-`get_table` <- function (ii, ...) {
-        # require(kableExtra, quietly = TRUE)
-        tab <- a[a$warea==ii,
-                 !(colnames(a) %in% c('warea','lat','lon'))]
-        colnames(tab) <- c('Year',rep(c('Mean','SD','n'), 4))
-        options(knitr.kable.NA = '')
-        knitr::kable(tab, row.names = F, longtable = T, booktabs = T,
-                     caption = NULL, escape = F) %>%
-                add_header_above(c('',
-                                   'Nitrogen air scores' = 3,
-                                   'Nitrogen trophic scores' = 3,
-                                   'Sulfur air scores' = 3,
-                                   'Sulfur trophic scores' = 3
-                ),
-                escape = FALSE)%>%
-                kable_styling(latex_options = 'repeat_header') %>%
-                column_spec(2:13, width = "1cm")
+`get_n` <- function (pick, ...) {
+        n <- unique(a[a$warea==pick, 'n_plots'])
+        if (any(!is.finite(n))) c(NA) else n
 }
 
 ###################################################################
 ui <- fluidPage(
         title = 'Wilderness Stewardship Performance',
+        titlePanel('Wilderness Stewardship Performance'),
+        br(),br(),
         sidebarLayout(
                 ### sidebar
                 sidebarPanel(
                         selectizeInput(
                                 'x',
                                 'Choose your Wilderness area',
-                                choices = wnames,
+                                choices = choices,
                                 options=list(
                                         placeholder='Begin typing',
                                         onInitialize = I('function() {
@@ -72,28 +72,24 @@ ui <- fluidPage(
                         radioButtons('format', 'Document format',
                                      c('PDF', 'HTML', 'Word'),
                                      inline = TRUE),
-                        downloadButton('downloadReport')
+                        downloadButton('downloadreport')
                 ),
                 ### main panel
                 mainPanel(
 
-                        ### main title
-                        br(),br(),
-                        h2('Wilderness Stewardship Performance'),
-
                         ### text for selected wilderness area
-                        h3(textOutput('selected_wa')),
+                        h2(textOutput('selected_wa')),
 
                         ### text for temporal coverage
-                        h4(textOutput('rangeofyears')),
+                        h3(textOutput('rangeofyears')),
 
                         ### trends plot
                         br(),br(),
                         plotOutput('trendplot'),
 
-                        ### table output
-                        br(),
-                        tableOutput('fulltable'),
+                        # ### table output
+                        # br(),
+                        # tableOutput('fulltable'),
 
                         ### footer
                         hr(),
@@ -115,7 +111,8 @@ ui <- fluidPage(
 server <- function(input, output) {
 
         ### reactive handler to capture wilderness name
-        r_wname <- reactive({
+        rx <- reactive({
+                req(input$x) # require it not to be empty
                 as.character(input$x)
         })
 
@@ -126,36 +123,33 @@ server <- function(input, output) {
 
         ### render text
         output$rangeofyears <- renderText({
-                rng <- get_years(ii = r_wname())
+                req(input$x)
+                rng <- get_years(pick = rx())
                 paste0('Years: ', rng[1], ' - ', rng[2])
         })
 
         ### render plot of wilderness trends
         output$trendplot <- renderPlot({
-                set_par(1)
-                plot_trend(ii = r_wname())
+                par(tcl=-0.2, mgp=c(1.8,0.4,0), mar=c(4,4,0.5,0.5),
+                    oma=c(0,0,0,0), pty = 's', bty = 'L', las = 1,
+                    cex.axis = 0.85)
+                plot_trend(pick = rx())
+                # set_par(4)
+                # plot_trend(pick = rx(), yvar = 'n_airscore')
+                # plot_trend(pick = rx(), yvar = 'n_ratio',
+                #            ylab = 'N eutroph ratio')
+                # plot_trend(pick = rx(), yvar = 's_scr',
+                #            ylab = expression(S~air~score~(kg~S~ha^'-1'~y^'-1')))
+                # plot_trend(pick = rx(), yvar = 's_ratio',
+                #            ylab = 'S eutroph ratio')
         })
 
-        ### table output
-        output$fulltable <- function() {
-                get_table(ii = r_wname())
-                # req(input$mpg)
-                # mtcars %>%
-                #         mutate(car = rownames(.)) %>%
-                #         select(car, everything()) %>%
-                #         filter(mpg <= input$mpg) %>%
-                #         knitr::kable("html") %>%
-                #         kable_styling("striped", full_width = F) %>%
-                #         add_header_above(c(" ", "Group 1" = 5, "Group 2" = 6))
-        }
-
-
         ### download handler
-        output$downloadReport <- downloadHandler(
+        output$downloadreport <- downloadHandler(
                 filename = function() {
                         paste('wsp_report', sep = '.', switch(
                                 input$format,
-                                PDF = 'pdf',
+                                PDF  = 'pdf',
                                 HTML = 'html',
                                 Word = 'docx'
                         ))
@@ -164,13 +158,19 @@ server <- function(input, output) {
                         src <- normalizePath('report.Rmd')
                         owd <- setwd(tempdir())
                         on.exit(setwd(owd))
-                        file.copy(src, 'report.Rmd', overwrite = TRUE)
-                        out <- rmarkdown::render('report.Rmd', switch(
-                                input$format,
-                                PDF  = pdf_document(),
-                                HTML = html_document(),
-                                Word = word_document()
-                        ))
+                        file.copy(src, 'report.Rmd', overwrite=TRUE)
+                        out <- rmarkdown::render(
+                                'report.Rmd',
+                                switch(
+                                        input$format,
+                                        PDF  = pdf_document(
+                                                toc = T,
+                                                toc_depth = 3,
+                                                number_sections = T
+                                        ),
+                                        HTML = html_document(),
+                                        Word = word_document()
+                                ))
                         file.rename(out, file)
                 }
         )
