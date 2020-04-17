@@ -3,87 +3,342 @@ title: |
    | Wilderness Air Quality Values  
    | for
    | `r input$x`
-output: 
-  pdf_document:
-     keep_tex: false
-     toc: no
-     latex_engine: pdflatex
-     fig_caption: yes
+date: 'Report prepared: `r format(Sys.time(), "%d %B %Y")`'
+header-includes:
+- \usepackage{float} \floatplacement{figure}{H}
+- \usepackage[font=small,skip=0pt]{caption}
+- \usepackage{wrapfig}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+# - \usepackage{hyperref} \hypersetup{pdfstartview={XYZ null null 1.00}, colorlinks = true, linkcolor = red, urlcolor = red}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-require(kableExtra, quietly = TRUE)
+options(knitr.kable.NA = '')
+### table function with 10-y mean
+`get_tab` <- function (pick, xvar, col.names, caption, format, do_mean=T){
+  tab <- a[which(a$warea==pick), xvar]
+  if (missing(col.names)) col.names <- xvar
+  if (missing(caption))   caption   <- NULL
+  if (missing(format))    format    <- 'pandoc'
+  j   <- xvar[xvar != 'year'] # dont consider year column
+  tab <- tab[rowSums(is.na(tab[,j])) != ncol(tab[,j]),] # no NA rows
+  if (do_mean) {              # summarize 10-y mean
+    `f` <- function (pick, xv=j, yr_ago=10) {
+      xv <- gsub('\\..*', '', xv)
+      x  <- d[which(d$wa==pick),]
+      yr <- as.numeric(format(Sys.time(), '%Y')) - yr_ago
+      x  <- x[x$year >= yr,]
+      x  <- x[,xv]
+      if(!all(is.vector(x),length(x)==1)) {
+        sapply(x, mean, na.rm=T)
+      } else {
+        mean(x, na.rm=T)
+      }
+    }
+    tab[,'year'] <- as.character(tab[,'year']) # force char
+    med <- f(pick=pick)   # calculate mean(s)
+    `rnd` <- function(x) trimws(format(round(x,digits=1),nsmall=1))
+    `r` <- function(xx) { # rounding/formatting
+      sapply(as.data.frame(xx), function(y)
+        if(is.numeric(y)) rnd(y) else y)
+    }
+    tab <- rbind(r(tab), c('10-y mean',  rnd(med))) # append
+    `fmt` <- function(d, row, col, type = 'bolditalic'){
+      n <- setNames(c('*','**','~~','***'),
+                    c('italic','bold','strikethru','bolditalic'))
+      v <- n[type]
+      for (r in row) {
+        for(c in col) {
+          d[[c]] <- as.character(d[[c]])
+          d[r,c] <- paste0(v,d[r,c],v)
+        }
+      }
+      return(d)
+    }
+    tab <- fmt(tab,row=NROW(tab),col=1:NCOL(tab)) # BOLD final line
+  }
+  tab[tab %in% c('NA','***NA***')] <- NA # replace character NA
+  knitr::kable(x         = tab,
+               format    = format,
+               row.names = F,
+               align = c('l', rep('r',NCOL(tab)-1)),
+               longtable = T,
+               booktabs  = T,
+               caption   = caption,
+               col.names = col.names)
+}
 ```
 
-# For Wilderness Area
+\vspace*{\fill}
+\begin{wrapfigure}{l}{1.8cm}
+  \includegraphics{C:/Users/Rob/Documents/_prj/1_orise/wildstew/R/usfs.png}
+\end{wrapfigure}
 
-Wilderness Stewardship Performance for: `r input$x`
+\  
 
-Prepared on: \small \textsc{`r format(Sys.time(), "%d %b %Y")`} \normalsize
+Air Resource Management Program  
+USDA Forest Service  
+1400 Independence Ave SW  
+Washington, DC 20250  
 
-```{r years, echo=FALSE}
-rng <- get_years(ii = r_wname())
+\  
+
+\newpage
+
+# Summary for `r input$x`
+
+```{r years_and_plot_count}
+rng <- get_years(pick = rx())
+n   <- get_n(pick = rx())
 ```
 
-Lichen sampling for `r input$x` covers the years: `r rng[1]` to `r rng[2]`.
+Lichen sampling for `r input$x` covers the years: `r rng[1]` to `r rng[2]` based on `r n` field-visited plot(s).
+
+Based on **critical loads exceedances**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition.
+
+Based on **lichen air scores**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition.
+
+Over the past decade, air quality in `r input$x` is **IMPROVING / STABLE / DETERIORATING**.
 
 
-# Trends over time
+\newpage
 
-```{r plot, fig.height=4, echo=FALSE}
-set_par(1)
-plot_trend(ii = r_wname())
+<!-- # Trends snapshot -->
+<!-- ```{r plot, fig.height=4, fig.cap='Snapshot of Wilderness Air Quality Values over time.'} -->
+<!-- # set_par(4) -->
+<!-- # plot_trend(pick = rx(), yvar = 'n_airscore', ylab = expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))) -->
+<!-- # plot_trend(pick = rx(), yvar = 'n_ratio', ylab = 'N eutroph ratio') -->
+<!-- # plot_trend(pick = rx(), yvar = 'n_ex_sr_sens', ylab = 'N CL exceedance,\nsensitive species') -->
+<!-- # plot_trend(pick = rx(), yvar = 'n_ex_compn', ylab = 'N CL exceedance,\ncomm composition') -->
+<!-- ``` -->
+
+
+# Site scores
+
+## Nitrogen
+
+```{r table_n_site}
+get_tab(pick = rx(), 
+        xvar=c('year','n_airscore.mean','nadj.mean','cmaq_n_3yroll.mean'), 
+        col.names=c('Year', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
+        caption= 'Site scores for estimated nitrogen deposition (N), as a *yearly mean* (kg ha^-1^ y^-1^).')
 ```
 
-# Table
-```{r table, echo=FALSE}
-
-   print(get_table(ii = r_wname()))
-
+```{r table_n_site_perc}
+get_tab(pick = rx(), 
+        xvar=c('year','p_n_airscore.mean','p_n_adj.mean','p_n_cmaq.mean'), 
+        col.names=c('Year', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
+        caption= 'Site scores for estimated nitrogen deposition (N), as a *percentile* (0-100).')
 ```
 
 
+## Sulfur
 
+```{r table_s_site}
+get_tab(pick = rx(), 
+        xvar=c('year','s_airscore.mean','sadj.mean','cmaq_s_3yroll.mean'), 
+        col.names=c('Year', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
+        caption= 'Site scores for estimated sulfur deposition (S), as a *yearly mean* (kg ha^-1^ y^-1^).')
+```
+
+```{r table_s_site_perc}
+get_tab(pick = rx(), 
+        xvar=c('year','p_s_airscore.mean','p_s_adj.mean','p_s_cmaq.mean'), 
+        col.names=c('Year', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
+        caption= 'Site scores for estimated sulfur deposition (S), as a *percentile* (0-100).')
+```
+
+\newpage
+
+# Critical loads exceedances
+
+## Nitrogen
+
+Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^). Negative values are safety margin below threshold, positive values are exceedance above threshold. The "10-yr mean" covers the 10 years preceding this report.  Exceedances are calculated based on three different metrics: raw lichen airscores, climate-adjusted airscores, or CMAQ modeled deposition values.
+
+### N exceedance: raw lichen airscores
+
+```{r table_exceedance_n_A}
+get_tab(pick = rx(), 
+        xvar=c('year', 'n_raw_ex_sr.mean', 'n_raw_ex_sr_sens.mean',
+               'n_raw_ex_sr_forag.mean', 'n_raw_ex_sr_cyano.mean', 
+               'n_raw_ex_compn.mean'), 
+        col.names=c('Year', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on raw lichen airscores.')
+```
+
+### N exceedance: climate-adjusted lichen airscores
+
+```{r table_exceedance_n_B}
+get_tab(pick = rx(), 
+        xvar=c('year', "n_adj_ex_sr.mean",       
+               "n_adj_ex_sr_sens.mean",   
+               "n_adj_ex_sr_forag.mean",  
+               "n_adj_ex_sr_cyano.mean", 
+               "n_adj_ex_compn.mean"),
+        col.names=c('Year', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
+```
+
+### N exceedance: CMAQ modeled deposition
+
+```{r table_exceedance_n_C}
+get_tab(pick = rx(), 
+        xvar=c('year', "n_cmaq_ex_sr.mean",
+               "n_cmaq_ex_sr_sens.mean",  
+               "n_cmaq_ex_sr_forag.mean",
+               "n_cmaq_ex_sr_cyano.mean", 
+               "n_cmaq_ex_compn.mean"), 
+        col.names=c('Year', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on CMAQ modeled deposition.')
+```
+
+\newpage
+
+## Sulfur
+
+Lichen-based CL exceedances for sulfur deposition (S), as a yearly mean (kg ha^-1^ y^-1^). Negative values are safety margin below threshold, positive values are exceedance above threshold. The "10-yr mean" covers the 10 years preceding this report.  Exceedances are calculated based on three different metrics: raw lichen airscores, climate-adjusted airscores, or CMAQ modeled deposition values.
+
+### N exceedance: raw lichen airscores
+
+```{r table_exceedance_s_A}
+get_tab(pick = rx(), 
+        xvar=c('year', 's_raw_ex_sr.mean', 's_raw_ex_sr_sens.mean',
+               's_raw_ex_sr_forag.mean', 's_raw_ex_sr_cyano.mean', 
+               's_raw_ex_compn.mean'), 
+        col.names=c('Year', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on raw lichen airscores.')
+```
+
+### N exceedance: climate-adjusted lichen airscores
+
+```{r table_exceedance_s_B}
+get_tab(pick = rx(), 
+        xvar=c('year', "s_adj_ex_sr.mean",       
+               "s_adj_ex_sr_sens.mean",   
+               "s_adj_ex_sr_forag.mean",  
+               "s_adj_ex_sr_cyano.mean", 
+               "s_adj_ex_compn.mean"),
+        col.names=c('Year', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
+```
+
+### N exceedance: CMAQ modeled deposition
+
+```{r table_exceedance_s_C}
+get_tab(pick = rx(), 
+        xvar=c('year', "s_cmaq_ex_sr.mean",
+               "s_cmaq_ex_sr_sens.mean",  
+               "s_cmaq_ex_sr_forag.mean",
+               "s_cmaq_ex_sr_cyano.mean", 
+               "s_cmaq_ex_compn.mean"), 
+        col.names=c('Year', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on CMAQ modeled deposition.')
+```
+
+
+\newpage
+
+# Trends
+
+\small 
+TODO: trends details here.  Need determine proper time unit (calendar decade? sampling decade?).
+\normalsize
+
+Air quality is IMPROVING/STABLE/DETERIORATING over the past ten years, relative to the preceding decade.  
+
+The past ten years have seen INCREASING/STABLE/DECREASING nitrogen (N) deposition as estimated by lichen-based metrics.
+
+The past ten years have seen INCREASING/STABLE/DECREASING sulfur (S) deposition as estimated by lichen-based metrics.
 
 \newpage
 
 # Further information
 
-## Why
+## Motivation
 
-Each Wilderness area managed by the USDA Forest Service is required to report annually on progress toward “wildernesses meeting baseline performance for preserving wilderness character”, otherwise known as Wilderness Stewardship Performance (WSP).  Among other elements, managers may report on Wilderness Air Quality Values (WAQVs) as a marker of natural quality of Wilderness character (WSP Guidebook 2020).  However, until now we have lacked a common template for nationally consistent, accurate, and timely reporting of WAQVs.  Here, we provide such a template to streamline annual WSP reporting for WAQVs based on lichen Critical Loads (CLs).
+Each Wilderness area managed by the USDA Forest Service is required to report annually on progress toward “wildernesses meeting baseline performance for preserving wilderness character”, otherwise known as Wilderness Stewardship Performance (WSP).  Among other elements, managers may report on **_Wilderness Air Quality Values_** (**_WAQVs_**) as a marker of natural quality of Wilderness character (WSP Guidebook 2020).  However, until now we have lacked a common template for nationally consistent, accurate, and timely reporting of WAQVs.  Here, we provide such a template to streamline annual WSP reporting for WAQVs from lichen-based Critical Loads (CLs).
 
+## Sensitive receptors
 
-## What
+WAQVs are supported by monitoring changes in “sensitive receptors” such as epiphytic macrolichens.  Lichens are impacted by air pollutants and therefore serve as indicators of changing conditions.  Workers long ago established relationships between lichen tissue elemental content and the atmospheric deposition of pollutants such as oxidized nitrogen (NOx), reduced nitrogen (NHx) and oxidized sulfur (SOx).  Each lichen species also has a unique and individualistic tolerance to pollutants, so observing collective responses is far more robust than any single species alone.
 
-WAQVs are supported by monitoring changes in “sensitive receptors” such as epiphytic macrolichens, which are negatively impacted by air pollutants, and which therefore may serve as indicators of changing conditions.  Workers have long ago established relationships between lichen tissue elemental content and the atmospheric deposition of pollutants such as oxidized nitrogen (NOx), reduced nitrogen (NHx) and oxidized sulfur (SOx).  Each lichen species also has a unique and individualistic tolerance to pollutants, and their collective responses are far more robust than any single species alone.  
+## Sensitive receptor indicators
 
-## Indicators
-
-For WSP reporting of air quality, measurable “sensitive receptor indicators” can be determined by the presence and abundance of lichen species in sampled sites.  Nationally-consistent FHM/FIA surveys of lichen communities let us score and classify species by their relative pollution tolerance, and to calculate community metrics across all species at a site.  Community metrics are more robust than tracking single species because of redundancy: the absence of a single species offers only weak evidence of air quality (what if the species simply wasn't able to disperse to that site? what if local microclimates were too harsh?), but the joint absence of an entire collection of species known to be pollution-intolerant would provide much stronger evidence of air-quality impacts.  The following two kinds of lichen-based score can describe patterns of atmospheric deposition.  
+For WSP reporting of air quality, measurable “sensitive receptor indicators” can be determined by the presence and abundance of lichen species in sampled sites.  Nationally-consistent FHM/FIA surveys of lichen communities let us score and classify species by their relative pollution tolerance, and to calculate community metrics across all species at a site.  Community metrics are more robust than tracking single species because the absence of a single species offers only circumstantial evidence of air quality (what if the species simply wasn't able to disperse to or tolerate microclimate at that site?).  The joint absence of multiple pollution-intolerant species provides much stronger evidence of air-quality impacts.  Lichen-based air scores and critical loads can describe patterns of atmospheric deposition.  
 
 ### Air scores
 
-Individual species' sensitivities were calculated as the value of total N or total S deposition (kg ha^-1^ y^-1^) at which the species was most frequently detected.  Air scores for each site were then calculated as the community-weighted mean of individual species' sensitivities, for all species present.  Therefore, the site air score represents the collective pollution tolerance of co-occurring species: "clean" sites should exhibit relatively low air scores driven by pollution-intolerant species, while "polluted" sites will have higher air scores driven by pollution-tolerant species.  Air score units are kg ha^-1^ y^-1^ for N or S.
+Individual species' sensitivities are the value of N or S deposition (kg ha^-1^ y^-1^) at which the species was most frequently detected.  Air scores for each site are the community-weighted mean of individual species' sensitivities, for all species present (kg ha^-1^ y^-1^).  Therefore, site air scores represent the collective pollution tolerance of co-occurring species: "clean" sites feature relatively low air scores driven by pollution-intolerant species, while "polluted" sites will have higher air scores driven by pollution-tolerant species.  Air scores are reported as both raw scores (not always easy to compare across climate zones) and as climate-adjusted scores (which are comparable nationwide).
 
-### Trophic scores
+### Critical loads exceedances
 
-Lichen species can be assigned to three main groups based on pollution tolerance; from low- to high-tolerance, these are oligotrophic, mesotrophic, eutrophic.  Sites can be scored by a ratio describing the number of oligotrophic species compared to the total number of oligotrophic and eutrophic species.  By this metric, "clean" sites will have relatively high trophic score (maximum = 1) driven by many pollution-intolerant species, while "polluted" sites will have relatively lower trophic scores (minimum = 0) driven by their absence. Tropic scores are unitless and range from 0--1 for N or S.
+A critical load (CL) is the air pollutant deposition rate expected to result in harmful ecosystem changes.  Exceedance is the degree to which locally observed deposition goes beyond an established CL.  Lichen-based CLs were established in prior work (Geiser et al. 2019).  Specifically, lichen-based CLs are the deposition rates at which we expect changes in 1) total species richness, 2) sensitive species richness, 3) forage lichen abundance, 4) cyanolichen abundance, and 5) community compositions (see **[next section](#critical-loads-we-used)**).
 
+## Critical loads we used
 
-# Example template:
-     
-1.	Wilderness name
-2.	Preparing agent
-3.	Summary of scores (percentile? Absolute value? CL?)
-     1.	Includes frequency distribution of site scores
-4.	Sampling period
-5.	Brief explanation of lichen-based method for determining WAQVs
-6.	Baseline CL
-7.	Trends in CL (if more than one sampling round)
-8.	Number of samples involved (disaggregated by on/off Wilderness)
-9.	Brief verbal description of WAQV situation (1 paragraph).
-10.	Ecosystem functions: Many rare spp? Many forage lichens? 
-11.	Lichen species list and each air score (NOx, NHx, SOx).
-12. Postage-stamp map of Wilderness area?
+We used critical loads from Table 3 in Geiser et al. (2019).  These critical loads are invariant to geography and so apply nationwide. See:  
+
+Geiser, L., P. Nelson, S. Jovan, H. Root, and C. Clark. 2019. Assessing ecological risks from atmospheric deposition of nitrogen and sulfur to US forests using epiphytic macrolichens. Diversity 11 (87):1-29. [doi:10.3390/d11060087](https://doi.org/10.3390/d11060087){target="_blank"}  
+
+\  
+
+```{r critical_loads_tab}
+tab <- data.frame(Metric = c('Species richness',
+                             'Sensitive species richness',
+                             'Forage lichen abundance',
+                             'Cyanolichen abundance',
+                             'Comm composition shifts'),
+                  Ndep = c(3.5, 3.1, 1.9, 1.3, 1.5),
+                  Sdep = c(6.0, 2.5, 2.6, 2.3, 2.7))
+knitr::kable(tab, format='pandoc', row.names = F, longtable = T,
+             booktabs  = T,
+             caption   = 'Critical loads used in this report (kg ha^-1^ y^-1^).',
+             escape    = F,
+             col.names = c('Lichen metric', 'N deposition', 'S deposition'))
+```
+
+<!-- ### Trophic scores -->
+<!-- Lichen species can be assigned to three main groups based on pollution tolerance: oligo-, meso- and eutrophic (from low to high tolerance). Sites can be scored by the ratio of oligotrophic species richness _vs._ the total richness of oligotrophic and eutrophic species.  By this metric, relatively "clean" sites have high trophic scores (maximum = 1) driven by pollution-intolerant species, while "polluted" sites have lower trophic scores (minimum = 0) driven by their absence. Trophic scores are unitless and range from 0--1 for N or S. -->
+
+\newpage
+
+# Species list
+
+List of all macrolichens documented in plots at `r input$x` over the years `r rng[1]` to `r rng[2]`.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  'N sensitivity' for each species ranges from low to high tolerance (oligo-, meso-, eutroph), as does 'S sensitivity' (sensitive, intermediate, tolerant).  'Fxl grp' = functional group, where 'cyano' = cyanolichens capable of nitrogen-fixation, and 'forage' = forage lichens important for wildlife. 'C status' = conservation status from NatureServe.
+
+```{r species_list}
+`get_tab_species` <- function (pick, ...) {
+  tab <- s[which(names(s) == pick)]
+  knitr::kable(x         = tab,
+               format    = 'markdown',  ### format = 'pandoc',
+               row.names = F,
+               longtable = T,
+               booktabs  = T,
+               caption   = 'Macrolichen species list.',
+               escape    = F,
+               col.names = c('Species','Family','Fxl grp', 
+                             'N sensitivity', 'S sensitivity',
+                             'C status')
+  )
+}
+get_tab_species(pick = rx())
+```
+
+End of report.
+
+<!-- END -->
