@@ -70,6 +70,7 @@ options(knitr.kable.NA = '')
                col.names = col.names)
 }
 ```
+<!-- \listoftables -->
 
 \vspace*{\fill}
 \begin{wrapfigure}{l}{1.8cm}
@@ -100,7 +101,7 @@ Based on **critical loads exceedances**, this Wilderness ranks in the *xx*^th^ p
 
 Based on **lichen air scores**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition.
 
-Over the past decade, air quality in `r input$x` is **IMPROVING / STABLE / DETERIORATING**.
+Over the past decade, air quality in `r input$x` is **[ IMPROVING / STABLE / DETERIORATING ]**.
 
 
 \newpage
@@ -114,11 +115,11 @@ Over the past decade, air quality in `r input$x` is **IMPROVING / STABLE / DETER
 <!-- # plot_trend(pick = rx(), yvar = 'n_ex_compn', ylab = 'N CL exceedance,\ncomm composition') -->
 <!-- ``` -->
 
-
 # Site scores
 
 ## Nitrogen
 
+### N: mean deposition
 ```{r table_n_site}
 get_tab(pick = rx(), 
         xvar=c('year','n_airscore.mean','nadj.mean','cmaq_n_3yroll.mean'), 
@@ -126,6 +127,7 @@ get_tab(pick = rx(),
         caption= 'Site scores for estimated nitrogen deposition (N), as a *yearly mean* (kg ha^-1^ y^-1^).')
 ```
 
+### N: percentiles
 ```{r table_n_site_perc}
 get_tab(pick = rx(), 
         xvar=c('year','p_n_airscore.mean','p_n_adj.mean','p_n_cmaq.mean'), 
@@ -133,9 +135,9 @@ get_tab(pick = rx(),
         caption= 'Site scores for estimated nitrogen deposition (N), as a *percentile* (0-100).')
 ```
 
-
 ## Sulfur
 
+### S: mean deposition
 ```{r table_s_site}
 get_tab(pick = rx(), 
         xvar=c('year','s_airscore.mean','sadj.mean','cmaq_s_3yroll.mean'), 
@@ -143,6 +145,7 @@ get_tab(pick = rx(),
         caption= 'Site scores for estimated sulfur deposition (S), as a *yearly mean* (kg ha^-1^ y^-1^).')
 ```
 
+### S: percentiles
 ```{r table_s_site_perc}
 get_tab(pick = rx(), 
         xvar=c('year','p_s_airscore.mean','p_s_adj.mean','p_s_cmaq.mean'), 
@@ -168,7 +171,7 @@ get_tab(pick = rx(),
         col.names=c('Year', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on raw lichen airscores.')
+        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on raw lichen airscores.')
 ```
 
 ### N exceedance: climate-adjusted lichen airscores
@@ -183,7 +186,7 @@ get_tab(pick = rx(),
         col.names=c('Year', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
+        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
 ```
 
 ### N exceedance: CMAQ modeled deposition
@@ -198,7 +201,7 @@ get_tab(pick = rx(),
         col.names=c('Year', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on CMAQ modeled deposition.')
+        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on CMAQ modeled deposition.')
 ```
 
 \newpage
@@ -207,7 +210,7 @@ get_tab(pick = rx(),
 
 Lichen-based CL exceedances for sulfur deposition (S), as a yearly mean (kg ha^-1^ y^-1^). Negative values are safety margin below threshold, positive values are exceedance above threshold. The "10-yr mean" covers the 10 years preceding this report.  Exceedances are calculated based on three different metrics: raw lichen airscores, climate-adjusted airscores, or CMAQ modeled deposition values.
 
-### N exceedance: raw lichen airscores
+### S exceedance: raw lichen airscores
 
 ```{r table_exceedance_s_A}
 get_tab(pick = rx(), 
@@ -217,10 +220,10 @@ get_tab(pick = rx(),
         col.names=c('Year', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on raw lichen airscores.')
+        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on raw lichen airscores.')
 ```
 
-### N exceedance: climate-adjusted lichen airscores
+### S exceedance: climate-adjusted lichen airscores
 
 ```{r table_exceedance_s_B}
 get_tab(pick = rx(), 
@@ -232,10 +235,10 @@ get_tab(pick = rx(),
         col.names=c('Year', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
+        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
 ```
 
-### N exceedance: CMAQ modeled deposition
+### S exceedance: CMAQ modeled deposition
 
 ```{r table_exceedance_s_C}
 get_tab(pick = rx(), 
@@ -247,7 +250,7 @@ get_tab(pick = rx(),
         col.names=c('Year', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on CMAQ modeled deposition.')
+        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on CMAQ modeled deposition.')
 ```
 
 
@@ -255,8 +258,8 @@ get_tab(pick = rx(),
 
 # Trends
 
-\small 
-TODO: trends details here.  Need determine proper time unit (calendar decade? sampling decade?).
+\large 
+TODO: trends details here.  Need proper time unit (calendar decade? sampling decade?).
 \normalsize
 
 Air quality is IMPROVING/STABLE/DETERIORATING over the past ten years, relative to the preceding decade.  
