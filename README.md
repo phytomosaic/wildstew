@@ -16,6 +16,7 @@ Each Wilderness area managed by the USDA Forest Service is required to report an
 
 Install the package from github as follows:
 ```r
+# Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS="true") # avoid errors
 install.packages('devtools')
 devtools::install_github('phytomosaic/wildstew')
 ```
