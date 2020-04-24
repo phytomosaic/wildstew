@@ -83,9 +83,9 @@ ui <- fluidPage(
                         ### text for temporal coverage
                         h3(textOutput('rangeofyears')),
 
-                        ### trends plot
-                        br(),br(),
-                        plotOutput('trendplot'),
+                        # ### trends plot
+                        # br(),br(),
+                        # plotOutput('trendplot'),
 
                         # ### table output
                         # br(),
@@ -128,21 +128,21 @@ server <- function(input, output) {
                 paste0('Years: ', rng[1], ' - ', rng[2])
         })
 
-        ### render plot of wilderness trends
-        output$trendplot <- renderPlot({
-                par(tcl=-0.2, mgp=c(1.8,0.4,0), mar=c(4,4,0.5,0.5),
-                    oma=c(0,0,0,0), pty = 's', bty = 'L', las = 1,
-                    cex.axis = 0.85)
-                plot_trend(pick = rx())
-                # set_par(4)
-                # plot_trend(pick = rx(), yvar = 'n_airscore')
-                # plot_trend(pick = rx(), yvar = 'n_ratio',
-                #            ylab = 'N eutroph ratio')
-                # plot_trend(pick = rx(), yvar = 's_scr',
-                #            ylab = expression(S~air~score~(kg~S~ha^'-1'~y^'-1')))
-                # plot_trend(pick = rx(), yvar = 's_ratio',
-                #            ylab = 'S eutroph ratio')
-        })
+        # ### render plot of wilderness trends
+        # output$trendplot <- renderPlot({
+        #         par(tcl=-0.2, mgp=c(1.8,0.4,0), mar=c(4,4,0.5,0.5),
+        #             oma=c(0,0,0,0), pty = 's', bty = 'L', las = 1,
+        #             cex.axis = 0.85)
+        #         plot_trend(pick = rx())
+        #         # set_par(4)
+        #         # plot_trend(pick = rx(), yvar = 'n_airscore')
+        #         # plot_trend(pick = rx(), yvar = 'n_ratio',
+        #         #            ylab = 'N eutroph ratio')
+        #         # plot_trend(pick = rx(), yvar = 's_scr',
+        #         #            ylab = expression(S~air~score~(kg~S~ha^'-1'~y^'-1')))
+        #         # plot_trend(pick = rx(), yvar = 's_ratio',
+        #         #            ylab = 'S eutroph ratio')
+        # })
 
         ### download handler
         output$downloadreport <- downloadHandler(
