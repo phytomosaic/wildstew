@@ -16,40 +16,11 @@ load('s.rda', verbose=T)  # data in same directory as app.R
 choices <- sort(unique(as.character(a$warea)))
 
 ### functions setup
-`plot_trend` <- function (pick, yvar, ylab, addtitle=FALSE, ...) {
-        if (missing(yvar)) yvar <- 'n_airscore'
-        y    <- a[a$warea==pick, paste0(yvar, '.mean')]
-        ysd  <- a[a$warea==pick, paste0(yvar, '.sd')]
-        yn   <- a[a$warea==pick, paste0(yvar, '.n')]
-        x    <- a[a$warea==pick,'year']
-        ylm  <- c(min(c(y, y - ysd), na.rm=T) - 0.4,
-                  max(c(y, y + ysd), na.rm=T) + 0.1)
-        if (all(is.infinite(ylm))) return(NULL)
-        if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
-        if (missing(ylab)) {
-                ylb <- expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))
-        } else {
-                ylb <- ylab
-        }
-        plot(x, y, pch=16, ylab=ylb, xlab='Year', ylim=ylm, ...)
-        `se` <- function(x, yval, se, wiskwidth=0.4) {
-                w <- wiskwidth/2
-                segments(x0=x, x1=x, y0=yval-se, y1=yval+se, lwd=2)
-                segments(x0=x-w, x1=x+w, y0=yval+se, y1=yval+se,lwd=2)
-                segments(x0=x-w, x1=x+w, y0=yval-se, y1=yval-se,lwd=2)
-        }
-        se(x, y, ysd)
-        text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2)
-        if (addtitle) title(pick)
-}
 `get_years` <- function (pick, ...) {
         rng <- range(a[a$warea==pick, 'year'], na.rm=TRUE)
         if (any(!is.finite(rng))) c(NA,NA) else rng
 }
-`get_n` <- function (pick, ...) {
-        n <- unique(a[a$warea==pick, 'n_plots'])
-        if (any(!is.finite(n))) c(NA) else n
-}
+
 
 ###################################################################
 ui <- fluidPage(
