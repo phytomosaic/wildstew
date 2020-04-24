@@ -17,10 +17,9 @@ choices <- sort(unique(as.character(a$warea)))
 
 ### functions setup
 `get_years` <- function (pick, ...) {
-        rng <- range(a[a$warea==pick, 'year'], na.rm=TRUE)
+        rng <- range(d[d$wa==pick, 'year'], na.rm=TRUE)
         if (any(!is.finite(rng))) c(NA,NA) else rng
 }
-
 
 ###################################################################
 ui <- fluidPage(

@@ -10,91 +10,188 @@ header-includes:
 # - \usepackage{hyperref} \hypersetup{pdfstartview={XYZ null null 1.00}, colorlinks = true, linkcolor = red, urlcolor = red}
 ---
 
-```{r setup, include=FALSE}
+```{r setup-options, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 options(knitr.kable.NA = '')
-`get_n` <- function (pick, ...) {
-  n <- unique(a[a$warea==pick, 'n_plots'])
-  if (any(!is.finite(n))) c(NA) else n
+# ### get number of plots
+# `get_n` <- function (pick, ...) {
+#   n <- unique(a[a$warea==pick, 'n_plots'])
+#   if (any(!is.finite(n))) c(NA) else n
+# }
+# ### table function with 10-y mean
+# `get_tab` <- function (pick, xvar, col.names, caption, format, do_mean=T){
+#   tab <- a[which(a$warea==pick), xvar]
+#   if (missing(col.names)) col.names <- xvar
+#   if (missing(caption))   caption   <- NULL
+#   if (missing(format))    format    <- 'pandoc'
+#   j   <- xvar[xvar != 'year'] # dont consider year column
+#   tab <- tab[rowSums(is.na(tab[,j])) != ncol(tab[,j]),] # no NA rows
+#   if (do_mean) {              # summarize 10-y mean
+#     `f` <- function (pick, xv=j, yr_ago=10) {
+#       xv <- gsub('\\..*', '', xv)
+#       x  <- d[which(d$wa==pick),]
+#       yr <- as.numeric(format(Sys.time(), '%Y')) - yr_ago
+#       x  <- x[x$year >= yr,]
+#       x  <- x[,xv]
+#       if(!all(is.vector(x),length(x)==1)) {
+#         sapply(x, mean, na.rm=T)
+#       } else {
+#         mean(x, na.rm=T)
+#       }
+#     }
+#     tab[,'year'] <- as.character(tab[,'year']) # force char
+#     med <- f(pick=pick)   # calculate mean(s)
+#     `rnd` <- function(x) trimws(format(round(x,digits=1),nsmall=1))
+#     `r` <- function(xx) { # rounding/formatting
+#       sapply(as.data.frame(xx), function(y)
+#         if(is.numeric(y)) rnd(y) else y)
+#     }
+#     tab <- rbind(r(tab), c('10-y mean',  rnd(med))) # append
+#     `fmt` <- function(d, row, col, type = 'bolditalic'){
+#       n <- setNames(c('*','**','~~','***'),
+#                     c('italic','bold','strikethru','bolditalic'))
+#       v <- n[type]
+#       for (r in row) {
+#         for(c in col) {
+#           d[[c]] <- as.character(d[[c]])
+#           d[r,c] <- paste0(v,d[r,c],v)
+#         }
+#       }
+#       return(d)
+#     }
+#     tab <- fmt(tab,row=NROW(tab),col=1:NCOL(tab)) # BOLD final line
+#   }
+#   tab[tab %in% c('NA','***NA***')] <- NA # replace character NA
+#   knitr::kable(x         = tab,
+#                format    = format,
+#                row.names = F,
+#                align = c('l', rep('r',NCOL(tab)-1)),
+#                longtable = T,
+#                booktabs  = T,
+#                caption   = caption,
+#                col.names = col.names)
+# }
+# `plot_trend` <- function (pick, yvar, ylab, addtitle=FALSE, ...) {
+#   if (missing(yvar)) yvar <- 'n_airscore'
+#   y    <- a[a$warea==pick, paste0(yvar, '.mean')]
+#   ysd  <- a[a$warea==pick, paste0(yvar, '.sd')]
+#   yn   <- a[a$warea==pick, paste0(yvar, '.n')]
+#   x    <- a[a$warea==pick,'year']
+#   ylm  <- c(min(c(y, y - ysd), na.rm=T) - 0.4,
+#             max(c(y, y + ysd), na.rm=T) + 0.1)
+#   if (all(is.infinite(ylm))) return(NULL)
+#   if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
+#   if (missing(ylab)) {
+#     ylb <- expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))
+#   } else {
+#     ylb <- ylab
+#   }
+#   plot(x, y, pch=16, ylab=ylb, xlab='Year', ylim=ylm, ...)
+#   `se` <- function(x, yval, se, wiskwidth=0.4) {
+#     w <- wiskwidth/2
+#     segments(x0=x, x1=x, y0=yval-se, y1=yval+se, lwd=2)
+#     segments(x0=x-w, x1=x+w, y0=yval+se, y1=yval+se,lwd=2)
+#     segments(x0=x-w, x1=x+w, y0=yval-se, y1=yval-se,lwd=2)
+#   }
+#   se(x, y, ysd)
+#   text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2)
+#   if (addtitle) title(pick)
+# }
+```
+
+```{r function-setup-functions, include=FALSE}
+### functions setup
+`get_years` <- function (pick, ...) {
+        rng <- range(d[d$wa==pick, 'year'], na.rm=TRUE)  ### <<--------------------
+        if (any(!is.finite(rng))) c(NA,NA) else rng
 }
-### table function with 10-y mean
+### get number of plots
+`get_n` <- function (pick, ...) {
+        n <- unique(a[a$warea==pick, 'n_plots'])
+        if (any(!is.finite(n))) c(NA) else n
+}
+### table function with 5-y mean
 `get_tab` <- function (pick, xvar, col.names, caption, format, do_mean=T){
-  tab <- a[which(a$warea==pick), xvar]
-  if (missing(col.names)) col.names <- xvar
-  if (missing(caption))   caption   <- NULL
-  if (missing(format))    format    <- 'pandoc'
-  j   <- xvar[xvar != 'year'] # dont consider year column
-  tab <- tab[rowSums(is.na(tab[,j])) != ncol(tab[,j]),] # no NA rows
-  if (do_mean) {              # summarize 10-y mean
-    `f` <- function (pick, xv=j, yr_ago=10) {
-      xv <- gsub('\\..*', '', xv)
-      x  <- d[which(d$wa==pick),]
-      yr <- as.numeric(format(Sys.time(), '%Y')) - yr_ago
-      x  <- x[x$year >= yr,]
-      x  <- x[,xv]
-      if(!all(is.vector(x),length(x)==1)) {
-        sapply(x, mean, na.rm=T)
-      } else {
-        mean(x, na.rm=T)
-      }
-    }
-    tab[,'year'] <- as.character(tab[,'year']) # force char
-    med <- f(pick=pick)   # calculate mean(s)
-    `rnd` <- function(x) trimws(format(round(x,digits=1),nsmall=1))
-    `r` <- function(xx) { # rounding/formatting
-      sapply(as.data.frame(xx), function(y)
-        if(is.numeric(y)) rnd(y) else y)
-    }
-    tab <- rbind(r(tab), c('10-y mean',  rnd(med))) # append
-    `fmt` <- function(d, row, col, type = 'bolditalic'){
-      n <- setNames(c('*','**','~~','***'),
-                    c('italic','bold','strikethru','bolditalic'))
-      v <- n[type]
-      for (r in row) {
-        for(c in col) {
-          d[[c]] <- as.character(d[[c]])
-          d[r,c] <- paste0(v,d[r,c],v)
+        tab <- a[which(a$warea==pick), xvar]
+        if (missing(col.names)) col.names <- xvar
+        if (missing(caption))   caption   <- NULL
+        if (missing(format))    format    <- 'pandoc'
+        # j   <- xvar[xvar != 'year'] # dont consider year column
+        j   <- xvar[xvar != 'fiveyr'] # dont consider year column  ### <<-------------------
+        tab <- tab[rowSums(is.na(tab[,j])) != ncol(tab[,j]),] # no NA rows
+        if (do_mean) {              # summarize 5-y mean
+                `f` <- function (pick, xv=j, yr_ago=5) {
+                        xv <- gsub('\\..*', '', xv)
+                        x  <- d[which(d$wa==pick),]
+                        yr <- as.numeric(format(Sys.time(), '%Y')) - yr_ago
+                        # x  <- x[x$year >= yr,] 
+                        x  <- x[x$fiveyr >= yr,]                   ### <<-------------------
+                        x  <- x[,xv]
+                        if(!all(is.vector(x),length(x)==1)) {
+                                sapply(x, mean, na.rm=T)
+                        } else {
+                                mean(x, na.rm=T)
+                        }
+                }
+                # tab[,'year'] <- as.character(tab[,'year']) # force char
+                tab[,'fiveyr'] <- as.character(tab[,'fiveyr']) # force char  ### <<-------------------
+                med <- f(pick=pick)   # calculate mean(s)
+                `rnd` <- function(x) trimws(format(round(x,digits=1),nsmall=1))
+                `r` <- function(xx) { # rounding/formatting
+                        sapply(as.data.frame(xx), function(y)
+                                if(is.numeric(y)) rnd(y) else y)
+                }
+                tab <- rbind(r(tab), c('5-y mean',  rnd(med))) # append
+                `fmt` <- function(d, row, col, type = 'bolditalic'){
+                        n <- setNames(c('*','**','~~','***'),
+                                      c('italic','bold','strikethru','bolditalic'))
+                        v <- n[type]
+                        for (r in row) {
+                                for(c in col) {
+                                        d[[c]] <- as.character(d[[c]])
+                                        d[r,c] <- paste0(v,d[r,c],v)
+                                }
+                        }
+                        return(d)
+                }
+                tab <- fmt(tab,row=NROW(tab),col=1:NCOL(tab)) # BOLD final line
         }
-      }
-      return(d)
-    }
-    tab <- fmt(tab,row=NROW(tab),col=1:NCOL(tab)) # BOLD final line
-  }
-  tab[tab %in% c('NA','***NA***')] <- NA # replace character NA
-  knitr::kable(x         = tab,
-               format    = format,
-               row.names = F,
-               align = c('l', rep('r',NCOL(tab)-1)),
-               longtable = T,
-               booktabs  = T,
-               caption   = caption,
-               col.names = col.names)
+        tab[tab %in% c('NA','***NA***','NaN','***NaN***')] <- NA # replace character NA
+        knitr::kable(x         = tab,
+                     format    = format,
+                     row.names = F,
+                     align = c('l', rep('r',NCOL(tab)-1)),
+                     longtable = T,
+                     booktabs  = T,
+                     caption   = caption,
+                     col.names = col.names)
 }
 `plot_trend` <- function (pick, yvar, ylab, addtitle=FALSE, ...) {
-  if (missing(yvar)) yvar <- 'n_airscore'
-  y    <- a[a$warea==pick, paste0(yvar, '.mean')]
-  ysd  <- a[a$warea==pick, paste0(yvar, '.sd')]
-  yn   <- a[a$warea==pick, paste0(yvar, '.n')]
-  x    <- a[a$warea==pick,'year']
-  ylm  <- c(min(c(y, y - ysd), na.rm=T) - 0.4,
-            max(c(y, y + ysd), na.rm=T) + 0.1)
-  if (all(is.infinite(ylm))) return(NULL)
-  if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
-  if (missing(ylab)) {
-    ylb <- expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))
-  } else {
-    ylb <- ylab
-  }
-  plot(x, y, pch=16, ylab=ylb, xlab='Year', ylim=ylm, ...)
-  `se` <- function(x, yval, se, wiskwidth=0.4) {
-    w <- wiskwidth/2
-    segments(x0=x, x1=x, y0=yval-se, y1=yval+se, lwd=2)
-    segments(x0=x-w, x1=x+w, y0=yval+se, y1=yval+se,lwd=2)
-    segments(x0=x-w, x1=x+w, y0=yval-se, y1=yval-se,lwd=2)
-  }
-  se(x, y, ysd)
-  text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2)
-  if (addtitle) title(pick)
+        if (missing(yvar)) yvar <- 'n_airscore'
+        y    <- a[a$warea==pick, paste0(yvar, '.mean')]
+        ysd  <- a[a$warea==pick, paste0(yvar, '.sd')]
+        yn   <- a[a$warea==pick, paste0(yvar, '.n')]
+        # x    <- a[a$warea==pick,'year']
+        x    <- a[a$warea==pick,'fiveyr']                    ### <<-------------------
+        ylm  <- c(min(c(y, y - ysd), na.rm=T) - 0.4,
+                  max(c(y, y + ysd), na.rm=T) + 0.1)
+        if (all(is.infinite(ylm))) return(NULL)
+        if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
+        if (missing(ylab)) {
+                ylb <- expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))
+        } else {
+                ylb <- ylab
+        }
+        plot(x, y, pch=16, ylab=ylb, xlab='Year', ylim=ylm, ...)
+        `se` <- function(x, yval, se, wiskwidth=0.4) {
+                w <- wiskwidth/2
+                segments(x0=x, x1=x, y0=yval-se, y1=yval+se, lwd=2)
+                segments(x0=x-w, x1=x+w, y0=yval+se, y1=yval+se,lwd=2)
+                segments(x0=x-w, x1=x+w, y0=yval-se, y1=yval-se,lwd=2)
+        }
+        se(x, y, ysd)
+        text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2)
+        if (addtitle) title(pick)
 }
 ```
 <!-- \listoftables -->
@@ -143,7 +240,7 @@ Over the past decade, air quality in `r input$x` is **[ IMPROVING / STABLE / DET
 ### N: mean deposition
 ```{r table_n_site}
 get_tab(pick = rx(), 
-        xvar=c('year','n_airscore.mean','nadj.mean','cmaq_n_3yroll.mean'), 
+        xvar=c('fiveyr','n_airscore.mean','nadj.mean','cmaq_n_3yroll.mean'), 
         col.names=c('Year', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
         caption= 'Site scores for estimated nitrogen deposition (N), as a *yearly mean* (kg ha^-1^ y^-1^).')
 ```
@@ -151,7 +248,7 @@ get_tab(pick = rx(),
 ### N: percentiles
 ```{r table_n_site_perc}
 get_tab(pick = rx(), 
-        xvar=c('year','p_n_airscore.mean','p_n_adj.mean','p_n_cmaq.mean'), 
+        xvar=c('fiveyr','p_n_airscore.mean','p_n_adj.mean','p_n_cmaq.mean'), 
         col.names=c('Year', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
         caption= 'Site scores for estimated nitrogen deposition (N), as a *percentile* (0-100).')
 ```
@@ -161,7 +258,7 @@ get_tab(pick = rx(),
 ### S: mean deposition
 ```{r table_s_site}
 get_tab(pick = rx(), 
-        xvar=c('year','s_airscore.mean','sadj.mean','cmaq_s_3yroll.mean'), 
+        xvar=c('fiveyr','s_airscore.mean','sadj.mean','cmaq_s_3yroll.mean'), 
         col.names=c('Year', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
         caption= 'Site scores for estimated sulfur deposition (S), as a *yearly mean* (kg ha^-1^ y^-1^).')
 ```
@@ -169,7 +266,7 @@ get_tab(pick = rx(),
 ### S: percentiles
 ```{r table_s_site_perc}
 get_tab(pick = rx(), 
-        xvar=c('year','p_s_airscore.mean','p_s_adj.mean','p_s_cmaq.mean'), 
+        xvar=c('fiveyr','p_s_airscore.mean','p_s_adj.mean','p_s_cmaq.mean'), 
         col.names=c('Year', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
         caption= 'Site scores for estimated sulfur deposition (S), as a *percentile* (0-100).')
 ```
@@ -188,7 +285,7 @@ Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha
 
 ```{r table_exceedance_n_A}
 get_tab(pick = rx(), 
-        xvar=c('year', 'n_raw_ex_sr.mean', 'n_raw_ex_sr_sens.mean',
+        xvar=c('fiveyr', 'n_raw_ex_sr.mean', 'n_raw_ex_sr_sens.mean',
                'n_raw_ex_sr_forag.mean', 'n_raw_ex_sr_cyano.mean', 
                'n_raw_ex_compn.mean'), 
         col.names=c('Year', 'Richness', 'Sensitive richness', 
@@ -201,7 +298,7 @@ get_tab(pick = rx(),
 
 ```{r table_exceedance_n_B}
 get_tab(pick = rx(), 
-        xvar=c('year', "n_adj_ex_sr.mean",       
+        xvar=c('fiveyr', "n_adj_ex_sr.mean",       
                "n_adj_ex_sr_sens.mean",   
                "n_adj_ex_sr_forag.mean",  
                "n_adj_ex_sr_cyano.mean", 
@@ -216,7 +313,7 @@ get_tab(pick = rx(),
 
 <!-- ```{r table_exceedance_n_C} -->
 <!-- get_tab(pick = rx(),  -->
-<!--         xvar=c('year', "n_cmaq_ex_sr.mean", -->
+<!--         xvar=c('fiveyr', "n_cmaq_ex_sr.mean", -->
 <!--                "n_cmaq_ex_sr_sens.mean",   -->
 <!--                "n_cmaq_ex_sr_forag.mean", -->
 <!--                "n_cmaq_ex_sr_cyano.mean",  -->
@@ -239,7 +336,7 @@ Lichen-based CL exceedances for sulfur deposition (S), as a yearly mean (kg ha^-
 
 ```{r table_exceedance_s_A}
 get_tab(pick = rx(), 
-        xvar=c('year', 's_raw_ex_sr.mean', 's_raw_ex_sr_sens.mean',
+        xvar=c('fiveyr', 's_raw_ex_sr.mean', 's_raw_ex_sr_sens.mean',
                's_raw_ex_sr_forag.mean', 's_raw_ex_sr_cyano.mean', 
                's_raw_ex_compn.mean'), 
         col.names=c('Year', 'Richness', 'Sensitive richness', 
@@ -252,7 +349,7 @@ get_tab(pick = rx(),
 
 ```{r table_exceedance_s_B}
 get_tab(pick = rx(), 
-        xvar=c('year', "s_adj_ex_sr.mean",       
+        xvar=c('fiveyr', "s_adj_ex_sr.mean",       
                "s_adj_ex_sr_sens.mean",   
                "s_adj_ex_sr_forag.mean",  
                "s_adj_ex_sr_cyano.mean", 
@@ -267,7 +364,7 @@ get_tab(pick = rx(),
 
 <!-- ```{r table_exceedance_s_C} -->
 <!-- get_tab(pick = rx(),  -->
-<!--         xvar=c('year', "s_cmaq_ex_sr.mean", -->
+<!--         xvar=c('fiveyr', "s_cmaq_ex_sr.mean", -->
 <!--                "s_cmaq_ex_sr_sens.mean",   -->
 <!--                "s_cmaq_ex_sr_forag.mean", -->
 <!--                "s_cmaq_ex_sr_cyano.mean",  -->
@@ -406,7 +503,7 @@ This Wilderness unit contained at least `r spp_obs` macrolichen species, which i
 
 \  
 
-```{r species-sampling-completeness, fig.height=2.75}
+```{r plot-sampling-completeness, fig.height=2.75, fig.cap='Species accumulation curve.'}
 # `get_richness` <- function (pick, ...) {
 #      NROW(s[[which(names(s) == pick)]])
 # }
