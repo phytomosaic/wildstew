@@ -379,7 +379,7 @@ knitr::kable(tab, format='pandoc', row.names = F, longtable = T,
 <!-- ### Trophic scores -->
 <!-- Lichen species can be assigned to three main groups based on pollution tolerance: oligo-, meso- and eutrophic (from low to high tolerance). Sites can be scored by the ratio of oligotrophic species richness _vs._ the total richness of oligotrophic and eutrophic species.  By this metric, relatively "clean" sites have high trophic scores (maximum = 1) driven by pollution-intolerant species, while "polluted" sites have lower trophic scores (minimum = 0) driven by their absence. Trophic scores are unitless and range from 0--1 for N or S. -->
 
-### Conservation status
+## Conservation status
 Conservation rankings follow NatureServe and COSEWIC.  Species considered 'at risk' here are those ranked by NatureServe as Critically Imperiled, Imperiled, or Vulnerable, and/or those ranked by COSEWIC as Endangered, Special Concern, or Threatened.  
 
 
@@ -389,6 +389,52 @@ Conservation rankings follow NatureServe and COSEWIC.  Species considered 'at ri
 # Lichen species observed
 
 ## Sampling completeness
+
+```{r run-species-completeness}
+`get_richness` <- function (pick, ...) {
+     NROW(s[[which(names(s) == pick)]])
+}
+`get_n_plots` <- function (pick, ...) {
+     NROW(a[which(a$warea==pick),])
+}
+spp_obs    <- get_richness(pick = rx())
+plot_obs   <- get_n_plots(pick = rx())
+spp_exp    <- 4.01 + 25.81*log(plot_obs) # log-linear eqn
+```
+
+This Wilderness unit contained at least `r spp_obs` macrolichen species, which is **`r ifelse(spp_obs > spp_exp, 'GREATER THAN', 'LESS THAN')`** the expected `r round(spp_exp, 1)` species.  Expected value is based on a species accumulation curve (depicted by the line below) where the expected number of species $y$ depends on sampling $x$ new plots: $y = 4.01 + 25.81 \times log(x)$.
+
+\  
+
+```{r species-sampling-completeness, fig.height=2.75}
+# `get_richness` <- function (pick, ...) {
+#      NROW(s[[which(names(s) == pick)]])
+# }
+# `get_n_plots` <- function (pick, ...) {
+#      NROW(a[which(a$warea==pick),])
+# }
+# spp_obs    <- get_richness(pick = rx())
+# plot_obs   <- get_n_plots(pick = rx())
+# spp_exp    <- 4.01 + 25.81*log(plot_obs) # log-linear eqn
+x <- 1:2500                              # n plots sampled
+y <- 4.01 + 25.81*log(x)                 # n species expected
+ecole::set_par(1)
+plot(x, y, type='l', log='x', xaxt='n', xlim=c(1,2500),
+     xlab=bquote(Plots~sampled~(log[10]~scale)),
+     ylab='Species expected')
+atx  <- outer(1:9, 10^(0:3))
+labx <- ifelse(log10(atx) %% 1 == 0, atx, NA)
+axis(1, at=atx, labels=labx, las=1)
+lines(rep(plot_obs,2), c(spp_exp,spp_obs))
+points(plot_obs, spp_exp, pch=21, cex=1.2, bg='white')
+points(plot_obs, spp_obs, pch=16, cex=1.2)
+legend('topleft', pch=c(16,21), bty='n', cex=0.7, pt.cex=1.0,
+       legend=c(paste0('Observed = ', spp_obs),
+                paste0('Expected = ', round(spp_exp,1))))
+
+```
+
+<!-- This Wilderness unit contained at least `r spp_obs` macrolichen species, which is **`r ifelse(spp_obs > spp_exp, 'GREATER THAN', 'LESS THAN')`** the expected `r round(spp_exp, 1)` species.  Expected value is based on a species accumulation curve (depicted by the line below) where the expected number of species $y$ depends on sampling $x$ new plots: $y = 4.01 + 25.81 \times log(x)$. -->
 
 
 
