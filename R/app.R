@@ -65,8 +65,8 @@ ui <- fluidPage(
                         hr(),
                         div(class='footer',
                             p('Questions? Comments? Contact: ',
-                              a('phytomosaic@gmail.com',
-                                href='phytomosaic@gmail.com',
+                              a('robert.smith3@usda.gov',
+                                href='robert.smith3@usda.gov',
                                 target='_blank')
                             ),
                             div(style='height:50px')
