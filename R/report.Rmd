@@ -227,7 +227,7 @@ options(knitr.kable.NA = '')
 
 \vspace*{\fill}
 \begin{wrapfigure}{l}{1.8cm}
-\includegraphics{C:/Users/Rob/Documents/_prj/1_orise/wildstew/R/usfs.png}
+\includegraphics{usfs.png}
 \end{wrapfigure}
 
 \  

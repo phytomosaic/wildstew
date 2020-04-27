@@ -126,9 +126,12 @@ server <- function(input, output) {
                 },
                 content = function(file) {
                         src <- normalizePath('report.Rmd')
+                        src_png <- normalizePath('usfs.png')
+
                         owd <- setwd(tempdir())
                         on.exit(setwd(owd))
                         file.copy(src, 'report.Rmd', overwrite=TRUE)
+                        file.copy(src_png, 'usfs.png', overwrite=TRUE)
                         out <- rmarkdown::render(
                                 'report.Rmd',
                                 switch(
