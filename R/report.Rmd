@@ -13,90 +13,6 @@ header-includes:
 ```{r setup-options, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 options(knitr.kable.NA = '')
-# ### get number of plots
-# `get_n` <- function (pick, ...) {
-#   n <- unique(a[a$warea==pick, 'n_plots'])
-#   if (any(!is.finite(n))) c(NA) else n
-# }
-# ### table function with 10-y mean
-# `get_tab` <- function (pick, xvar, col.names, caption, format, do_mean=T){
-#   tab <- a[which(a$warea==pick), xvar]
-#   if (missing(col.names)) col.names <- xvar
-#   if (missing(caption))   caption   <- NULL
-#   if (missing(format))    format    <- 'pandoc'
-#   j   <- xvar[xvar != 'year'] # dont consider year column
-#   tab <- tab[rowSums(is.na(tab[,j])) != ncol(tab[,j]),] # no NA rows
-#   if (do_mean) {              # summarize 10-y mean
-#     `f` <- function (pick, xv=j, yr_ago=10) {
-#       xv <- gsub('\\..*', '', xv)
-#       x  <- d[which(d$wa==pick),]
-#       yr <- as.numeric(format(Sys.time(), '%Y')) - yr_ago
-#       x  <- x[x$year >= yr,]
-#       x  <- x[,xv]
-#       if(!all(is.vector(x),length(x)==1)) {
-#         sapply(x, mean, na.rm=T)
-#       } else {
-#         mean(x, na.rm=T)
-#       }
-#     }
-#     tab[,'year'] <- as.character(tab[,'year']) # force char
-#     med <- f(pick=pick)   # calculate mean(s)
-#     `rnd` <- function(x) trimws(format(round(x,digits=1),nsmall=1))
-#     `r` <- function(xx) { # rounding/formatting
-#       sapply(as.data.frame(xx), function(y)
-#         if(is.numeric(y)) rnd(y) else y)
-#     }
-#     tab <- rbind(r(tab), c('10-y mean',  rnd(med))) # append
-#     `fmt` <- function(d, row, col, type = 'bolditalic'){
-#       n <- setNames(c('*','**','~~','***'),
-#                     c('italic','bold','strikethru','bolditalic'))
-#       v <- n[type]
-#       for (r in row) {
-#         for(c in col) {
-#           d[[c]] <- as.character(d[[c]])
-#           d[r,c] <- paste0(v,d[r,c],v)
-#         }
-#       }
-#       return(d)
-#     }
-#     tab <- fmt(tab,row=NROW(tab),col=1:NCOL(tab)) # BOLD final line
-#   }
-#   tab[tab %in% c('NA','***NA***')] <- NA # replace character NA
-#   knitr::kable(x         = tab,
-#                format    = format,
-#                row.names = F,
-#                align = c('l', rep('r',NCOL(tab)-1)),
-#                longtable = T,
-#                booktabs  = T,
-#                caption   = caption,
-#                col.names = col.names)
-# }
-# `plot_trend` <- function (pick, yvar, ylab, addtitle=FALSE, ...) {
-#   if (missing(yvar)) yvar <- 'n_airscore'
-#   y    <- a[a$warea==pick, paste0(yvar, '.mean')]
-#   ysd  <- a[a$warea==pick, paste0(yvar, '.sd')]
-#   yn   <- a[a$warea==pick, paste0(yvar, '.n')]
-#   x    <- a[a$warea==pick,'year']
-#   ylm  <- c(min(c(y, y - ysd), na.rm=T) - 0.4,
-#             max(c(y, y + ysd), na.rm=T) + 0.1)
-#   if (all(is.infinite(ylm))) return(NULL)
-#   if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
-#   if (missing(ylab)) {
-#     ylb <- expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))
-#   } else {
-#     ylb <- ylab
-#   }
-#   plot(x, y, pch=16, ylab=ylb, xlab='Year', ylim=ylm, ...)
-#   `se` <- function(x, yval, se, wiskwidth=0.4) {
-#     w <- wiskwidth/2
-#     segments(x0=x, x1=x, y0=yval-se, y1=yval+se, lwd=2)
-#     segments(x0=x-w, x1=x+w, y0=yval+se, y1=yval+se,lwd=2)
-#     segments(x0=x-w, x1=x+w, y0=yval-se, y1=yval-se,lwd=2)
-#   }
-#   se(x, y, ysd)
-#   text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2)
-#   if (addtitle) title(pick)
-# }
 ```
 
 ```{r function-setup-functions, include=FALSE}
@@ -199,7 +115,7 @@ options(knitr.kable.NA = '')
         if (missing(yvar)) yvar <- 'n_airscore'
         y    <- a[a$warea==pick, paste0(yvar, '.mean')]
         ysd  <- a[a$warea==pick, paste0(yvar, '.sd')]
-        yn   <- a[a$warea==pick, paste0(yvar, '.n')]
+        yn   <- a[a$warea==pick, paste0(yvar, '.n')] ### <<-- incorrect?
         # x    <- a[a$warea==pick,'year']
         x    <- a[a$warea==pick,'fiveyr']                    ### <<-------------------
         ylm  <- c(min(c(y, y - ysd), na.rm=T) - 0.4,
@@ -219,7 +135,7 @@ options(knitr.kable.NA = '')
                 segments(x0=x-w, x1=x+w, y0=yval-se, y1=yval-se,lwd=2)
         }
         se(x, y, ysd)
-        text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2)
+        # text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2) # plot count
         if (addtitle) title(pick)
 }
 ```
@@ -550,17 +466,17 @@ knitr::kable(tab, format='pandoc', row.names = F, longtable = T,
 
 ```{r run-species-completeness}
 `get_richness` <- function (pick, ...) {
-     NROW(s[[which(names(s) == pick)]])
+  NROW(s[[which(names(s) == pick)]])
 }
 `get_n_plots` <- function (pick, ...) {
-     NROW(a[which(a$warea==pick),])
+  NROW(d[which(d$wa==pick),])
 }
 spp_obs    <- get_richness(pick = rx())
 plot_obs   <- get_n_plots(pick = rx())
 spp_exp    <- 4.01 + 25.81*log(plot_obs) # log-linear eqn
 ```
 
-This Wilderness unit contained at least `r spp_obs` macrolichen species, which is **`r ifelse(spp_obs > spp_exp, 'GREATER THAN', 'LESS THAN')`** the expected `r round(spp_exp, 1)` species.  Expected value is based on a species accumulation curve (depicted by the line below) where the expected number of species $y$ depends on sampling $x$ new plots: $y = 4.01 + 25.81 \times log(x)$.
+This Wilderness unit contained at least `r spp_obs` macrolichen species observed in `r plot_obs` plots, which is **`r ifelse(spp_obs > spp_exp, 'GREATER THAN', 'LESS THAN')`** the expected `r round(spp_exp, 1)` species.  Expected value is based on a species accumulation curve (depicted by the line below) where the expected number of species $y$ depends on sampling $x$ new plots: $y = 4.01 + 25.81 \times log(x)$.
 
 \  
 
