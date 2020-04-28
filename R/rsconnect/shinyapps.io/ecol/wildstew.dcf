@@ -1,0 +1,12 @@
+name: wildstew
+title: wildstew
+username:
+account: ecol
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2180531
+bundleId: 3074714
+url: https://ecol.shinyapps.io/wildstew/
+when: 1588036487.06046
+asMultiple: FALSE
+asStatic: FALSE
