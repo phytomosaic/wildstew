@@ -3,7 +3,7 @@
 #  Wilderness Stewardship Performance:
 #      Shiny app for automagically generated WSP reports
 #
-#    Rob Smith, phytomosaic@gmail.com, 16 Apr 2020
+#    Rob Smith, phytomosaic@gmail.com, 27 Apr 2020
 #
 ##      GNU General Public License, Version 3.0    ###################
 

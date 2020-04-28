@@ -250,56 +250,95 @@ n   <- get_n(pick = rx())
 
 Lichen sampling for `r input$x` covers the years: `r rng[1]` to `r rng[2]` based on `r n` field-visited plot(s).^[See **[HERE](#further-information)** for methods.]
 
-Based on **critical loads exceedances**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition.
+\  
 
-Based on **lichen air scores**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition.
+<!-- Based on **critical loads exceedances**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition. -->
 
-Over the past decade, air quality in `r input$x` is **[ IMPROVING / STABLE / DETERIORATING ]**.
-
+<!-- Based on **lichen air scores**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition. -->
 
 ```{r aq-trends}
-### TODO
-# aq_trend   <- c('IMPROVING','STABLE','DETERIORATING')[now > then]
-# ndep_trend <- c('DECREASING','STABLE','INCREASING')[now > then]
-# sdep_trend <- c('DECREASING','STABLE','INCREASING')[now > then]
-aq_trend   <- 'IMPROVING'
-ndep_trend <- 'DECREASING'
-sdep_trend <- 'DECREASING'
+### get 5-y trend of sitescores (verbal trend)
+`get_trend_verbal` <- function (pick, ...) {
+        labs <- c('INCREASING', 'SLIGHTLY INCREASING', 'STABLE',
+                  'SLIGHTLY DECREASING', 'DECREASING')
+        `f` <- function (pick, element, ...) {
+                stopifnot(element %in% c('n','s'))
+                xvar <- c('fiveyr', paste0(element, '_airscore.mean'))
+                scr  <- a[which(a$warea==pick), xvar]
+                j    <- xvar[xvar != 'fiveyr'] # dont consider year col
+                nr   <- NROW(scr)
+                if (nr == 1) {
+                        trd <- NA # no trend if only 1 sampling round
+                } else {
+                        trd <- scr[nr,] - scr[(nr-1),] # TREND vector
+                        trd <- unlist(trd[,names(trd) != 'fiveyr'])
+                }
+                if (all(is.na(trd))) {
+                        return('NOT DETERMINED')
+                }
+                trdv <- as.character(
+                        cut(trd, breaks=c(Inf, 2,1,-1,-2,-Inf),
+                            labels=labs))
+                return(trdv)
+        }
+        trd_n <- f(pick[1], element='n') # nitrogen
+        trd_s <- f(pick[1], element='s') # sulfur
+        x <- data.frame(val=c(1:5,NA),label=c(labs,'NOT DETERMINED'))
+        n_s_mean <- mean(c(x$val[match(trd_n, x$label)],
+                           x$val[match(trd_s, x$label)]), na.rm=TRUE)
+        if (is.nan(n_s_mean)) { # if both N and S are NA
+                trd_both <- 'NOT DETERMINED'
+        } else {
+                trd_both <- as.character(
+                        cut(n_s_mean,
+                            breaks=c(0, 1.5, 2.5, 3.5, 4.5, 5.5),
+                            labels=c('DETERIORATING',
+                                     'SLIGHTLY DETERIORATING',
+                                     'STABLE',
+                                     'SLIGHTLY IMPROVING',
+                                     'IMPROVING')))
+        }
+        c(trd_both=trd_both, trd_n=trd_n, trd_s=trd_s)
+}
+trend <- get_trend_verbal(pick = rx())
 ```
 
-Over the most recent five year interval (relative to the preceding five years):  
+In the most recent five-year interval (relative to the preceding five years):  
 
-Air quality is apparently \Large \textbf{`r aq_trend`} \normalsize.  
+... overall air quality in `r input$x` is \Large \textbf{`r trend[1]`}\normalsize.  
 
-N deposition is apparently \Large \textbf{`r ndep_trend`} \normalsize.  
+... N deposition is \Large \textbf{`r trend[2]`}\normalsize.  
 
-S deposition is apparently \Large \textbf{`r sdep_trend`} \normalsize.  
+... S deposition is \Large \textbf{`r trend[3]`}\normalsize.  
 
+```{r cl-exceedance-verbal}
+x <- a[which(a$warea==rx()), 
+         c('fiveyr','n_raw_meanexceed.mean','s_raw_meanexceed.mean')]
+nr  <- NROW(x) # most recent fiveyr
+labs <- c('BELOW','APPROACHING','EXCEEDING','STRONGLY EXCEEDING')
+exc_n <- as.character(cut(x[nr,2],breaks=c(-Inf,0,3,6,9),labels=labs))
+exc_s <- as.character(cut(x[nr,3],breaks=c(-Inf,0,3,6,9),labels=labs))
+exc_n[is.na(exc_n)] <- 'NOT DETERMINED'
+exc_s[is.na(exc_s)] <- 'NOT DETERMINED'
+```
 
-## N trends plot
+... N deposition was \Large \textbf{`r exc_n`} \normalsize lichen-based critical loads.  
 
-```{r plot-n-trends, fig.height=3, fig.cap='Nitrogen trends.', warning=FALSE}
-set_par(3)
+... and S deposition was \Large \textbf{`r exc_s`} \normalsize lichen-based critical loads.  
+
+\  
+
+```{r plot-trends, fig.height=4.5, fig.cap='Air quality trends.', warning=FALSE}
+set_par(4)
 plot_trend(pick = rx(), yvar = 'n_airscore',
            ylab = expression(N~air~score~(kg~N~ha^'-1'~y^'-1')))
-plot_trend(pick = rx(), yvar = 'n_raw_ex_sr_sens',
-           ylab = 'N CL exceedance,\nsensitive species'); abline(h=0)
-plot_trend(pick = rx(), yvar = 'n_raw_ex_compn',
-           ylab = 'N CL exceedance,\ncomm composition'); abline(h=0)
-```
-
-## S trends plot
-
-```{r plot-s-trends, fig.height=3, fig.cap='Sulfur trends.', warning=FALSE}
-set_par(3)
+plot_trend(pick = rx(), yvar = 'n_raw_meanexceed',
+           ylab = 'Mean N CL exceedances'); abline(h=0)
 plot_trend(pick = rx(), yvar = 's_airscore',
            ylab = expression(S~air~score~(kg~S~ha^'-1'~y^'-1')))
-plot_trend(pick = rx(), yvar = 's_raw_ex_sr_sens',
-           ylab = 'S CL exceedance,\nsensitive species'); abline(h=0)
-plot_trend(pick = rx(), yvar = 's_raw_ex_compn',
-           ylab = 'S CL exceedance,\ncomm composition'); abline(h=0)
+plot_trend(pick = rx(), yvar = 's_raw_meanexceed',
+           ylab = 'Mean S CL exceedances'); abline(h=0)
 ```
-
 
 
 \newpage
