@@ -64,6 +64,8 @@ ui <- fluidPage(
                         ### footer
                         hr(),
                         div(class='footer',
+                            p('Warning! Data are provisional and subject to change --'),
+                            p('Do not use for actual reporting!'),
                             p('Questions? Comments? Contact: ',
                               a('robert.smith3@usda.gov',
                                 href='robert.smith3@usda.gov',
@@ -141,8 +143,18 @@ server <- function(input, output) {
                                                 toc_depth = 3,
                                                 number_sections = T
                                         ),
-                                        HTML = html_document(),
-                                        Word = word_document()
+                                        HTML  = pdf_document(
+                                                toc = T,
+                                                toc_depth = 3,
+                                                number_sections = T
+                                        ),
+                                        Word  = pdf_document(
+                                                toc = T,
+                                                toc_depth = 3,
+                                                number_sections = T
+                                        )
+                                        # HTML = html_document(),
+                                        # Word = word_document()
                                 ))
                         file.rename(out, file)
                 }
