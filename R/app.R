@@ -3,16 +3,21 @@
 #  Wilderness Stewardship Performance:
 #      Shiny app for automagically generated WSP reports
 #
-#    Rob Smith, phytomosaic@gmail.com, 27 Apr 2020
+#    Rob Smith, phytomosaic@gmail.com, 19 May 2020
 #
 ##      GNU General Public License, Version 3.0    ###################
 
 require(shiny)
 require(rmarkdown)
 require(knitr)
+require(rgdal)
+require(raster)
+require(viridis)
 load('d.rda', verbose=T)  # data in same directory as app.R
 load('a.rda', verbose=T)  # data in same directory as app.R
 load('s.rda', verbose=T)  # data in same directory as app.R
+w    <- readOGR(dsn='.', 'wilderness_2017') # shapefiles
+dem  <- raster('dem_usa_unclipped.tif') # DEM raster
 choices <- sort(unique(as.character(a$warea)))
 
 ### functions setup
@@ -40,7 +45,8 @@ ui <- fluidPage(
                                 )
                         ),
                         radioButtons('format', 'Document format',
-                                     c('PDF', 'HTML', 'Word'),
+                                     c('PDF'),
+                                     # c('PDF', 'HTML', 'Word'),
                                      inline = TRUE),
                         downloadButton('downloadreport')
                 ),
@@ -143,18 +149,18 @@ server <- function(input, output) {
                                                 toc_depth = 3,
                                                 number_sections = T
                                         ),
-                                        HTML  = pdf_document(
-                                                toc = T,
-                                                toc_depth = 3,
-                                                number_sections = T
-                                        ),
-                                        Word  = pdf_document(
-                                                toc = T,
-                                                toc_depth = 3,
-                                                number_sections = T
-                                        )
-                                        # HTML = html_document(),
-                                        # Word = word_document()
+                                        # HTML  = pdf_document(
+                                        #         toc = T,
+                                        #         toc_depth = 3,
+                                        #         number_sections = T
+                                        # ),
+                                        # Word  = pdf_document(
+                                        #         toc = T,
+                                        #         toc_depth = 3,
+                                        #         number_sections = T
+                                        # )
+                                        HTML = html_document(),
+                                        Word = word_document()
                                 ))
                         file.rename(out, file)
                 }
