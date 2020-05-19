@@ -256,6 +256,52 @@ plot_trend(pick = rx(), yvar = 's_raw_meanexceed',
            ylab = 'Mean S CL exceedances'); abline(h=0)
 ```
 
+Valuebar below.
+
+```{r plot-valuebar, fig.height=4.5, fig.width=6.0, fig.cap='Valuebar, showing observed N deposition from the CMAQ model, in relation to lichen-based critical loads.'}
+### plot the valuebar for observed CMAQ deposition
+`plot_valuebar` <- function(pick, ...){
+    x <- a[which(a$warea==pick),
+           c('fiveyr','cmaq_n_3yroll.mean', 'cmaq_n_3yroll.sd')]
+    obs    <- x[NROW(x),'cmaq_n_3yroll.mean']
+    # obs_sd <- x[NROW(x),'cmaq_n_3yroll.sd']
+    cl  <- c(3.5, 3.1, 1.9, 1.3, 1.5) # cf. Geiser et al. 2019
+    `p` <- function(zmin=-0.5, zmax=10.0, xlab, yat, ylab, ...) {
+        n    <- 100
+        xseq <- seq(zmin, zmax, len=n)
+        xn   <- expression(N~deposition~'('*kg~ha^-1~yr^-1*')')
+        plot(xseq, seq(1, 10, len=n), type='n', xlab=xn,
+             yaxt='n', ylab='', ylim=c(1,13.4), yaxs='i', xaxs='r', ...)
+        # axis(2,yat,lab=ylab)
+    }
+    # yat  <- rev(seq(2,10,by=2))
+    # ylab <- rev(c('Species richness CL',
+    #               'Sensitive species CL',
+    #               'Forage lichen CL',
+    #               'Cyanolichen CL',
+    #               'Community composition CL'))
+    # par(mar=c(4,14,1,.1), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
+    # par(mar=c(4,14,1,.1), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
+    par(mar=c(4,.3,.3,.3))
+    p(yat=yat, ylab=ylab, las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
+    cc <- viridis::inferno(5,begin=0.1,end=0.9,alpha=seq(0.7,1,len=5))
+    rect(-1, -10, 1.2, 20,  col=cc[1], border=NA)
+    rect(1.2, -10, 3.6, 20,  col=cc[2], border=NA)
+    rect(3.6, -10, 5.6, 20,  col=cc[3], border=NA)
+    rect(5.6, -10, 7.6, 20,  col=cc[4], border=NA)
+    rect(7.6, -10, 19.6, 20, col=cc[5], border=NA)
+    text(x=0.2, y=13.1, 'Acceptable', pos=1, cex=0.6)
+    text(x=2.3, y=13.1, 'Marginal', pos=1, cex=0.6)
+    text(x=4.6, y=13.1, 'Concerning', pos=1, cex=0.6)
+    text(x=6.6, y=13.1, 'Poor', pos=1, cex=0.6)
+    text(x=8.8, y=13.1, 'Very poor', pos=1, cex=0.6)
+    arrows(obs, 9, obs, 1, length=0.20, angle=15, lwd=3, col=1)
+    text(x=obs, y=10, 'OBSERVED', pos=1, cex=0.7, font=2)
+    # for (i in 1:5) lines(c(obs,cl[i]), c(yat[i],yat[i]))
+    # points(cl, yat, pch=16, cex=0.1)
+}
+plot_valuebar(pick = rx())
+```
 
 
 \newpage
