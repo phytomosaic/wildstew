@@ -70,7 +70,8 @@ ui <- fluidPage(
                         ### footer
                         hr(),
                         div(class='footer',
-                            p('Warning! Data are provisional and subject to change --'),
+                            p('Warning! This app is in beta stage for trial only!'),
+                            p('Data are provisional and subject to change --'),
                             p('Do not use for actual reporting!'),
                             p('Questions? Comments? Contact: ',
                               a('robert.smith3@usda.gov',
@@ -99,11 +100,12 @@ server <- function(input, output) {
                 paste(input$x)
         })
 
-        ### render text
+        ### render text upon selection
         output$rangeofyears <- renderText({
                 req(input$x)
                 rng <- get_years(pick = rx())
-                paste0('Years: ', rng[1], ' - ', rng[2])
+                paste0('We are compiling your report...\n',
+                       'Years: ', rng[1], ' - ', rng[2])
         })
 
         # ### render plot of wilderness trends
