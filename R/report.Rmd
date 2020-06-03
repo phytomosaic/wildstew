@@ -258,50 +258,55 @@ plot_trend(pick = rx(), yvar = 's_raw_meanexceed',
 
 Valuebar below.
 
-```{r plot-valuebar, fig.height=2.5, fig.width=6.0, fig.cap='Valuebar, showing observed N deposition from the CMAQ model, in relation to lichen-based critical loads.'}
+Nitrogen.
+
+```{r plot-plot_valuebar_N, fig.height=2.5, fig.width=6.0, fig.cap='Observed N deposition from CMAQ model (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
 ### plot the valuebar for observed CMAQ deposition
-`plot_valuebar` <- function(pick, ...){
-    x <- a[which(a$warea==pick),
-           c('fiveyr','cmaq_n_3yroll.mean', 'cmaq_n_3yroll.sd')]
-    obs    <- x[NROW(x),'cmaq_n_3yroll.mean']
-    # obs_sd <- x[NROW(x),'cmaq_n_3yroll.sd']
-    cl  <- c(3.5, 3.1, 1.9, 1.3, 1.5) # cf. Geiser et al. 2019
-    `p` <- function(zmin=-0.5, zmax=10.0, xlab, yat, ylab, ...) {
-        n    <- 100
-        xseq <- seq(zmin, zmax, len=n)
-        xn   <- expression(N~deposition~'('*kg~ha^-1~yr^-1*')')
-        plot(xseq, seq(1, 10, len=n), type='n', xlab=xn,
-             yaxt='n', ylab='', ylim=c(1,13.4), yaxs='i', xaxs='r', ...)
-        # axis(2,yat,lab=ylab)
-    }
-    # yat  <- rev(seq(2,10,by=2))
-    # ylab <- rev(c('Species richness CL',
-    #               'Sensitive species CL',
-    #               'Forage lichen CL',
-    #               'Cyanolichen CL',
-    #               'Community composition CL'))
-    # par(mar=c(4,14,1,.1), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
-    # par(mar=c(4,14,1,.1), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
-    par(mar=c(4,.3,.3,.3))
-    p(yat=yat, ylab=ylab, las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
-    cc <- viridis::inferno(5,begin=0.1,end=0.9,alpha=seq(0.7,1,len=5))
-    rect(-1, -10, 1.2, 20,  col=cc[1], border=NA)
-    rect(1.2, -10, 3.6, 20,  col=cc[2], border=NA)
-    rect(3.6, -10, 5.6, 20,  col=cc[3], border=NA)
-    rect(5.6, -10, 7.6, 20,  col=cc[4], border=NA)
-    rect(7.6, -10, 19.6, 20, col=cc[5], border=NA)
-    text(x=0.2, y=13.1, 'Acceptable', pos=1, cex=0.7)
-    text(x=2.3, y=13.1, 'Marginal', pos=1, cex=0.7)
-    text(x=4.6, y=13.1, 'Concerning', pos=1, cex=0.7)
-    text(x=6.6, y=13.1, 'Poor', pos=1, cex=0.7)
-    text(x=8.8, y=13.1, 'Very poor', pos=1, cex=0.7)
-    arrows(obs, 8.5, obs, 1, length=0.20, angle=15, lwd=3, col=1)
-    text(x=obs, y=10.5, 'OBSERVED', pos=1, cex=0.7, font=2)
-    # for (i in 1:5) lines(c(obs,cl[i]), c(yat[i],yat[i]))
-    # points(cl, yat, pch=16, cex=0.1)
+`plot_valuebar` <- function(pick, brk=b, select='n', ...){
+    b   <- brk
+    x   <- a[which(a$warea==pick),
+             paste0('cmaq_',select,'_3yroll.mean')]
+    obs <-  x[length(x)]
+  par(mar=c(4,.3,.3,.3), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
+  n    <- 100
+  xseq <- seq(-0.5, 20.0, len=n)
+  plot(xseq, seq(1, 10, len=n), type='n', bty='n',
+       yaxt='n', ylab='', ylim=c(1,13.4), yaxs='i', xaxs='r', ...)
+  cc <- viridis::inferno(5,begin=0.1,end=0.9,alpha=seq(0.7,1,len=5))
+  rect(-9,   -10, b[1], 20, col=cc[1], border=NA)
+  rect(b[1], -10, b[2], 20, col=cc[2], border=NA)
+  rect(b[2], -10, b[3], 20, col=cc[3], border=NA)
+  rect(b[3], -10, b[4], 20, col=cc[4], border=NA)
+  rect(b[4], -10, 99,   20, col=cc[5], border=NA)
+  text(x=b[1] - 0.5*(b[1]-(-1)), y=13.1, 'Acceptable', pos=1, cex=0.6)
+  text(x=b[2] - 0.5*(b[2]-b[1]), y=13.1, 'Marginal', pos=1, cex=0.6)
+  text(x=b[3] - 0.5*(b[3]-b[2]), y=13.1, 'Concerning', pos=1, cex=0.6)
+  text(x=b[4] - 0.5*(b[4]-b[3]), y=13.1, 'Poor', pos=1, cex=0.6)
+  text(x=21   - 0.5*(21-b[4]),   y=13.1, 'Very poor', pos=1, cex=0.6)
+  if (obs > 20) {
+    arrows(20.2, 8.2, 20.2, 1, length=0.20, angle=15, lwd=3, col=1)
+    text(x=18.8, y=10, 'OBSERVED', pos=1, cex=0.7, font=2)
+  } else {
+    arrows(obs, 8.2, obs, 1, length=0.20, angle=15, lwd=3, col=1)
+    text(x=obs, y=10, 'OBSERVED', pos=1, cex=0.7, font=2)
+  }
 }
-plot_valuebar(pick = rx())
+b <- c(2.5, 6, 9.9, 14) # new (loosely based on 20/50/80)
+plot_valuebar(pick = rx(), brk=b, select='n',
+              xlab=expression(N~deposition~'('*kg~ha^-1~yr^-1*')'))
 ```
+
+Sulfur.
+
+```{r plot_valuebar_S, fig.height=2.5, fig.width=6.0, fig.cap='Observed S deposition from CMAQ model (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
+### plot the valuebar for observed CMAQ S deposition
+b <- b+(b*0.05) # new (loosely based on 20/50/80)
+plot_valuebar(pick = rx(), brk=b, select='s',
+              xlab=expression(S~deposition~'('*kg~ha^-1~yr^-1*')'))
+```
+
+
+
 
 
 \newpage
@@ -698,7 +703,11 @@ Percentage of rated species with 'sensitive' S tolerance: **`r x$ssens`\%**.
 
 ## Species list
 
-List of all macrolichens observed in plots at `r input$x` over the years `r rng[1]` to `r rng[2]`.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  Functional groups ('Fxl grp') include cyanolichens ('cyano') capable of nitrogen-fixation, and forage lichens ('forage') important for wildlife.  'N sensitivity' for each species ranges from low to high tolerance (oligo-, meso-, eutroph), as does 'S sensitivity' (sensitive, intermediate, tolerant).  Critical loads ('CL') are deposition levels resulting in 20\% decrease in occurrence.  'Conservation' = conservation status from NatureServe.
+List of all macrolichens observed in plots at `r input$x` over the years `r rng[1]` to `r rng[2]`.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  
+
+Functional groups ('Fxl grp') include cyanolichens ('cyano') capable of nitrogen-fixation, and forage lichens ('forage') important for wildlife.  'N sensitivity' for each species ranges from low to high tolerance (oligo-, meso-, eutroph), as does 'S sensitivity' (sensitive, intermediate, tolerant).  Critical loads ('CL') are deposition levels resulting in 20\% decrease in occurrence.  
+
+'Conservation' = conservation status from NatureServe (https://www.natureserve.org/), which assigns each species both a global (G) and state (S) rank on a scale of 1 to 5 (1=Critically imperiled; 2=Imperiled; 3=Vulnerable; 4=Apparently secure; 5=Secure).  
 
 ```{r species_list}
 `get_tab_species` <- function (pick, ...) {
