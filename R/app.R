@@ -16,15 +16,9 @@ require(viridis)
 load('d.rda', verbose=T)  # data in same directory as app.R
 load('a.rda', verbose=T)  # data in same directory as app.R
 load('s.rda', verbose=T)  # data in same directory as app.R
-w    <- readOGR(dsn='.', 'wilderness_2017') # shapefiles
-dem  <- raster('dem_usa_unclipped.tif') # DEM raster
+w       <- readOGR(dsn='.', 'wilderness_2017') # shapefiles
+dem     <- raster('dem_usa_unclipped.tif') # DEM raster
 choices <- sort(unique(as.character(a$warea)))
-
-### functions setup
-`get_years` <- function (pick, ...) {
-        rng <- range(d[d$wa==pick, 'year'], na.rm=TRUE)
-        if (any(!is.finite(rng))) c(NA,NA) else rng
-}
 
 ###################################################################
 ui <- fluidPage(

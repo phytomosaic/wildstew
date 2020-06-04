@@ -7,7 +7,6 @@ header-includes:
 - \usepackage{wrapfig}
 - \usepackage{booktabs}
 - \usepackage{longtable}
-# - \usepackage{hyperref} \hypersetup{pdfstartview={XYZ null null 1.00}, colorlinks = true, linkcolor = red, urlcolor = red}
 ---
 
 ```{r setup-options, include=FALSE}
@@ -49,58 +48,25 @@ options(knitr.kable.NA = '')
         rng <- range(d[d$wa==pick, 'year'], na.rm=TRUE)  ### <<--------------------
         if (any(!is.finite(rng))) c(NA,NA) else rng
 }
+### get recent decade
+`get_recent_decade` <- function (pick, ...) {
+     s <- sort(unique(a[a$warea==pick, 'tenyr']))
+     s <- s[length(s)]
+     if (any(!is.finite(s))) c(NA) else s
+}
 ### get number of plots
 `get_n` <- function (pick, ...) {
         n <- unique(a[a$warea==pick, 'n_plots'])
         if (any(!is.finite(n))) c(NA) else n
 }
 ### table function with 5-y mean
-`get_tab` <- function (pick, xvar, col.names, caption, format, do_mean=T){
+`get_tab` <- function (pick, xvar, col.names, caption, format){
         tab <- a[which(a$warea==pick), xvar]
         if (missing(col.names)) col.names <- xvar
         if (missing(caption))   caption   <- NULL
         if (missing(format))    format    <- 'pandoc'
-        # j   <- xvar[xvar != 'year'] # dont consider year column
-        j   <- xvar[xvar != 'fiveyr'] # dont consider year column  ### <<-------------------
+        j   <- xvar[xvar != 'tenyr'] # dont consider year column
         tab <- tab[rowSums(is.na(tab[,j])) != ncol(tab[,j]),]
-        if (do_mean) {              # summarize 5-y mean
-                `f` <- function (pick, xv=j, yr_ago=5) {
-                        xv <- gsub('\\..*', '', xv)
-                        x  <- d[which(d$wa==pick),]
-                        yr <- as.numeric(format(Sys.time(), '%Y')) - yr_ago
-                        # x  <- x[x$year >= yr,] 
-                        x  <- x[x$fiveyr >= yr,]                   ### <<-------------------
-                        x  <- x[,xv]
-                        if(!all(is.vector(x),length(x)==1)) {
-                                sapply(x, mean, na.rm=T)
-                        } else {
-                                mean(x, na.rm=T)
-                        }
-                }
-                # tab[,'year'] <- as.character(tab[,'year'])
-                tab[,'fiveyr'] <- as.character(tab[,'fiveyr']) ### <<-------------------
-                med <- f(pick=pick)   # calculate mean(s)
-                `rnd` <- function(x) trimws(format(round(x,digits=1),nsmall=1))
-                `r` <- function(xx) { # rounding/formatting
-                        sapply(as.data.frame(xx), function(y)
-                                if(is.numeric(y)) rnd(y) else y)
-                }
-                tab <- rbind(r(tab), c('Recent 5 y',rnd(med))) # append
-                `fmt` <- function(d, row, col, type = 'bolditalic'){
-                        n <- setNames(c('*','**','~~','***'),
-                                      c('italic','bold',
-                                        'strikethru','bolditalic'))
-                        v <- n[type]
-                        for (r in row) {
-                                for(c in col) {
-                                        d[[c]] <- as.character(d[[c]])
-                                        d[r,c] <- paste0(v,d[r,c],v)
-                                }
-                        }
-                        return(d)
-                } # BOLD final line:
-                tab <- fmt(tab,row=NROW(tab),col=1:NCOL(tab)) 
-        }
         tab[tab %in% c('NA','***NA***','NaN','***NaN***')] <- NA 
         knitr::kable(x         = tab,
                      format    = format,
@@ -111,35 +77,7 @@ options(knitr.kable.NA = '')
                      caption   = caption,
                      col.names = col.names)
 }
-`plot_trend` <- function (pick, yvar, ylab, addtitle=FALSE, ...) {
-        if (missing(yvar)) yvar <- 'n_airscore'
-        y    <- a[a$warea==pick, paste0(yvar, '.mean')]
-        ysd  <- a[a$warea==pick, paste0(yvar, '.sd')]
-        yn   <- a[a$warea==pick, paste0(yvar, '.n')] ### <<-- incorrect?
-        # x    <- a[a$warea==pick,'year']
-        x    <- a[a$warea==pick,'fiveyr']                    ### <<-------------------
-        ylm  <- c(min(c(y, y - ysd), na.rm=T) - 0.4,
-                  max(c(y, y + ysd), na.rm=T) + 0.1)
-        if (all(is.infinite(ylm))) return(NULL)
-        if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
-        if (missing(ylab)) {
-                ylb <- expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))
-        } else {
-                ylb <- ylab
-        }
-        plot(x, y, pch=16, ylab=ylb, xlab='Year', ylim=ylm, ...)
-        `se` <- function(x, yval, se, wiskwidth=0.4) {
-                w <- wiskwidth/2
-                segments(x0=x, x1=x, y0=yval-se, y1=yval+se, lwd=2)
-                segments(x0=x-w, x1=x+w, y0=yval+se, y1=yval+se,lwd=2)
-                segments(x0=x-w, x1=x+w, y0=yval-se, y1=yval-se,lwd=2)
-        }
-        se(x, y, ysd)
-        # text(x, min(c(ylm,y))+0.1, yn, cex=0.7, col=2) # plot count
-        if (addtitle) title(pick)
-}
 ```
-<!-- \listoftables -->
 
 \vspace*{\fill}
 \begin{wrapfigure}{l}{1.8cm}
@@ -162,117 +100,30 @@ Washington, DC 20250
 ```{r years_and_plot_count}
 rng <- get_years(pick = rx())
 n   <- get_n(pick = rx())
+dec <- get_recent_decade(pick = rx())
 ```
 
-Lichen sampling for `r input$x` covers the years: `r rng[1]` to `r rng[2]` based on `r n` field-visited plot(s).^[See **[HERE](#further-information)** for methods.]
+Number of surveyed plots:   **`r n`**  
+Field sampling dates: **`r rng[1]` to `r rng[2]`**  
+Most recent ten-year sampling period: **`r dec`**  
+<!-- National rank for **critical loads exceedances**: *xx*^th^ percentile -->
+<!-- National rank for **climate-adjusted lichen air scores**: *xx*^th^ percentile -->
 
-\  
+## Nitrogen snapshot
 
-<!-- Based on **critical loads exceedances**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition. -->
-
-<!-- Based on **lichen air scores**, this Wilderness ranks in the *xx*^th^ percentile nationally for N deposition and *xx*^th^ percentile for S deposition. -->
-
-```{r aq-trends}
-### get 5-y trend of sitescores (verbal trend)
-`get_trend_verbal` <- function (pick, ...) {
-        labs <- c('INCREASING', 'SLIGHTLY INCREASING', 'STABLE',
-                  'SLIGHTLY DECREASING', 'DECREASING')
-        `f` <- function (pick, element, ...) {
-                stopifnot(element %in% c('n','s'))
-                xvar <- c('fiveyr', paste0(element, '_airscore.mean'))
-                scr  <- a[which(a$warea==pick), xvar]
-                j    <- xvar[xvar != 'fiveyr'] # dont consider year col
-                nr   <- NROW(scr)
-                if (nr == 1) {
-                        trd <- NA # no trend if only 1 sampling round
-                } else {
-                        trd <- scr[nr,] - scr[(nr-1),] # TREND vector
-                        trd <- unlist(trd[,names(trd) != 'fiveyr'])
-                }
-                if (all(is.na(trd))) {
-                        return('NOT DETERMINED')
-                }
-                trdv <- as.character(
-                        cut(trd, breaks=c(Inf, 2,1,-1,-2,-Inf),
-                            labels=labs))
-                return(trdv)
-        }
-        trd_n <- f(pick[1], element='n') # nitrogen
-        trd_s <- f(pick[1], element='s') # sulfur
-        x <- data.frame(val=c(1:5,NA),label=c(labs,'NOT DETERMINED'))
-        n_s_mean <- mean(c(x$val[match(trd_n, x$label)],
-                           x$val[match(trd_s, x$label)]), na.rm=TRUE)
-        if (is.nan(n_s_mean)) { # if both N and S are NA
-                trd_both <- 'NOT DETERMINED'
-        } else {
-                trd_both <- as.character(
-                        cut(n_s_mean,
-                            breaks=c(0, 1.5, 2.5, 3.5, 4.5, 5.5),
-                            labels=c('DETERIORATING',
-                                     'SLIGHTLY DETERIORATING',
-                                     'STABLE',
-                                     'SLIGHTLY IMPROVING',
-                                     'IMPROVING')))
-        }
-        c(trd_both=trd_both, trd_n=trd_n, trd_s=trd_s)
-}
-trend <- get_trend_verbal(pick = rx())
-```
-
-In the most recent five-year interval (relative to the preceding five years):  
-
-... overall air quality in `r input$x` is \Large \textbf{`r trend[1]`}\normalsize.  
-
-... N deposition is \Large \textbf{`r trend[2]`}\normalsize.  
-
-... S deposition is \Large \textbf{`r trend[3]`}\normalsize.  
-
-```{r cl-exceedance-verbal}
-x <- a[which(a$warea==rx()), 
-         c('fiveyr','n_raw_meanexceed.mean','s_raw_meanexceed.mean')]
-nr  <- NROW(x) # most recent fiveyr
-labs <- c('BELOW','APPROACHING','EXCEEDING','STRONGLY EXCEEDING')
-exc_n <- as.character(cut(x[nr,2],breaks=c(-Inf,0,3,6,9),labels=labs))
-exc_s <- as.character(cut(x[nr,3],breaks=c(-Inf,0,3,6,9),labels=labs))
-exc_n[is.na(exc_n)] <- 'NOT DETERMINED'
-exc_s[is.na(exc_s)] <- 'NOT DETERMINED'
-```
-
-... N deposition was \Large \textbf{`r exc_n`} \normalsize lichen-based critical loads.  
-
-... and S deposition was \Large \textbf{`r exc_s`} \normalsize lichen-based critical loads.  
-
-\  
-
-```{r plot-trends, fig.height=4.5, fig.cap='Air quality trends.', warning=FALSE}
-set_par(4)
-plot_trend(pick = rx(), yvar = 'n_airscore',
-           ylab = expression(N~air~score~(kg~N~ha^'-1'~y^'-1')))
-plot_trend(pick = rx(), yvar = 'n_raw_meanexceed',
-           ylab = 'Mean N CL exceedances'); abline(h=0)
-plot_trend(pick = rx(), yvar = 's_airscore',
-           ylab = expression(S~air~score~(kg~S~ha^'-1'~y^'-1')))
-plot_trend(pick = rx(), yvar = 's_raw_meanexceed',
-           ylab = 'Mean S CL exceedances'); abline(h=0)
-```
-
-Valuebar below.
-
-Nitrogen.
-
-```{r plot-plot_valuebar_N, fig.height=2.5, fig.width=6.0, fig.cap='Observed N deposition from CMAQ model (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
+```{r plot-plot_valuebar_N, fig.height=2.25, fig.width=6.0, fig.cap='Observed N deposition from CMAQ model (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
 ### plot the valuebar for observed CMAQ deposition
 `plot_valuebar` <- function(pick, brk=b, select='n', ...){
-    b   <- brk
-    x   <- a[which(a$warea==pick),
-             paste0('cmaq_',select,'_3yroll.mean')]
-    obs <-  x[length(x)]
-  par(mar=c(4,.3,.3,.3), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
+  b   <- brk
+  x   <- a[which(a$warea==pick),
+           paste0('cmaq_',select,'_3yroll.mean')]
+  obs <-  x[length(x)]
+  par(mar=c(4,0.3,0.3,0.3), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
   n    <- 100
   xseq <- seq(-0.5, 20.0, len=n)
   plot(xseq, seq(1, 10, len=n), type='n', bty='n',
        yaxt='n', ylab='', ylim=c(1,13.4), yaxs='i', xaxs='r', ...)
-  cc <- viridis::inferno(5,begin=0.1,end=0.9,alpha=seq(0.7,1,len=5))
+  cc   <- viridis::inferno(5,begin=0.1,end=0.9,alpha=seq(0.7,1,len=5))
   rect(-9,   -10, b[1], 20, col=cc[1], border=NA)
   rect(b[1], -10, b[2], 20, col=cc[2], border=NA)
   rect(b[2], -10, b[3], 20, col=cc[3], border=NA)
@@ -296,9 +147,11 @@ plot_valuebar(pick = rx(), brk=b, select='n',
               xlab=expression(N~deposition~'('*kg~ha^-1~yr^-1*')'))
 ```
 
-Sulfur.
+\  
 
-```{r plot_valuebar_S, fig.height=2.5, fig.width=6.0, fig.cap='Observed S deposition from CMAQ model (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
+## Sulfur snapshot
+
+```{r plot_valuebar_S, fig.height=2.25, fig.width=6.0, fig.cap='Observed S deposition from CMAQ model (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
 ### plot the valuebar for observed CMAQ S deposition
 b <- b+(b*0.05) # new (loosely based on 20/50/80)
 plot_valuebar(pick = rx(), brk=b, select='s',
@@ -306,15 +159,12 @@ plot_valuebar(pick = rx(), brk=b, select='s',
 ```
 
 
-
-
-
 \newpage
 
 
-# Area map
+## Area map
 
-```{r plot-map, fig.height=6.5, fig.width=6.49, fig.cap='Local area map.', warning=FALSE}
+```{r plot-map, fig.height=6.5, fig.width=6.49, fig.cap='Local area map.  Red outline is Wilderness boundary, black points are survey plot locations, shaded contours are terrain elevations above sea level.', warning=FALSE}
 ###  map wilderness boundary and sampling locations
 `map_points` <- function (pick=pick, pts=d, shp=w, ras=dem, lwd.cont=1,
                           ...) {
@@ -443,21 +293,23 @@ map_points(pick = rx(), pts=d, shp=w, ras=dem)
 
 # Site scores
 
+You can think of site scores (or "air scores") as the "average" position of species along an air quality gradient.  Technically, these are the community-weighted mean of species' sensitivities, where sensitivities are defined as the value of N or S deposition (kg ha^-1^ y^-1^) at which each species was most frequently detected.  We report both raw and climate-adjusted scores, and their nationwide ranking as a percentile.^[See **["Indicator: Air scores"](#indicator-air-scores)** section for more information.].
+
 ## Nitrogen
 
 ### N: mean deposition
 ```{r table_n_site}
 get_tab(pick = rx(), 
-        xvar=c('fiveyr','n_airscore.mean','nadj.mean','cmaq_n_3yroll.mean'), 
-        col.names=c('Five-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
-        caption= 'Site scores for estimated nitrogen deposition (N), as a *yearly mean* (kg ha^-1^ y^-1^).')
+        xvar=c('tenyr','n_airscore.mean','nadj.mean','cmaq_n_3yroll.mean'), 
+        col.names=c('Ten-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
+        caption= 'Site scores for estimated nitrogen deposition (N), as a *mean* (kg ha^-1^ y^-1^).')
 ```
 
 ### N: percentiles
 ```{r table_n_site_perc}
 get_tab(pick = rx(), 
-        xvar=c('fiveyr','p_n_airscore.mean','p_n_adj.mean','p_n_cmaq.mean'), 
-        col.names=c('Five-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
+        xvar=c('tenyr','p_n_airscore.mean','p_n_adj.mean','p_n_cmaq.mean'), 
+        col.names=c('Ten-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
         caption= 'Site scores for estimated nitrogen deposition (N), as a *percentile* (0-100).')
 ```
 
@@ -466,16 +318,16 @@ get_tab(pick = rx(),
 ### S: mean deposition
 ```{r table_s_site}
 get_tab(pick = rx(), 
-        xvar=c('fiveyr','s_airscore.mean','sadj.mean','cmaq_s_3yroll.mean'), 
-        col.names=c('Five-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
-        caption= 'Site scores for estimated sulfur deposition (S), as a *yearly mean* (kg ha^-1^ y^-1^).')
+        xvar=c('tenyr','s_airscore.mean','sadj.mean','cmaq_s_3yroll.mean'), 
+        col.names=c('Ten-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
+        caption= 'Site scores for estimated sulfur deposition (S), as a *mean* (kg ha^-1^ y^-1^).')
 ```
 
 ### S: percentiles
 ```{r table_s_site_perc}
 get_tab(pick = rx(), 
-        xvar=c('fiveyr','p_s_airscore.mean','p_s_adj.mean','p_s_cmaq.mean'), 
-        col.names=c('Five-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
+        xvar=c('tenyr','p_s_airscore.mean','p_s_adj.mean','p_s_cmaq.mean'), 
+        col.names=c('Ten-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
         caption= 'Site scores for estimated sulfur deposition (S), as a *percentile* (0-100).')
 ```
 
@@ -485,101 +337,65 @@ get_tab(pick = rx(),
 
 # Critical loads exceedances
 
-## Nitrogen
+Exceedances are the departure of raw or climate-adjusted lichen airscores from established lichen-based critical loads^[See **["Critical loads we used"](#critical-loads-we-used)** section.], expressed as the mean of a ten-year period.  Negative values indicate the "safety margin" below the critical load threshold, positive values indicate exceedance above the threshold. 
 
-Lichen-based CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^). Negative values are safety margin below threshold, positive values are exceedance above threshold. "Recent 5 y" covers the 5 years _immediately_ preceding this report.  Exceedances are calculated based on three different metrics: raw lichen airscores, climate-adjusted airscores, or CMAQ modeled deposition values.
+## Nitrogen
 
 ### N exceedance: raw lichen airscores
 
 ```{r table_exceedance_n_A}
 get_tab(pick = rx(), 
-        xvar=c('fiveyr', 'n_raw_ex_sr.mean', 'n_raw_ex_sr_sens.mean',
+        xvar=c('tenyr', 'n_raw_ex_sr.mean', 'n_raw_ex_sr_sens.mean',
                'n_raw_ex_sr_forag.mean', 'n_raw_ex_sr_cyano.mean', 
                'n_raw_ex_compn.mean'), 
-        col.names=c('Five-year interval', 'Richness', 'Sensitive richness', 
+        col.names=c('Ten-year interval', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on raw lichen airscores.')
+        caption= 'CL exceedances for mean nitrogen deposition (kg N ha^-1^ y^-1^), based on raw lichen airscores.')
 ```
 
 ### N exceedance: climate-adjusted lichen airscores
 
 ```{r table_exceedance_n_B}
 get_tab(pick = rx(), 
-        xvar=c('fiveyr', 'n_adj_ex_sr.mean',       
+        xvar=c('tenyr', 'n_adj_ex_sr.mean',       
                'n_adj_ex_sr_sens.mean',   
                'n_adj_ex_sr_forag.mean',  
                'n_adj_ex_sr_cyano.mean', 
                'n_adj_ex_compn.mean'),
-        col.names=c('Five-year interval', 'Richness', 'Sensitive richness', 
+        col.names=c('Ten-year interval', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
+        caption= 'CL exceedances for mean nitrogen deposition (kg N ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
 ```
 
-<!-- ### N exceedance: CMAQ modeled deposition -->
-
-<!-- ```{r table_exceedance_n_C} -->
-<!-- get_tab(pick = rx(),  -->
-<!--         xvar=c('fiveyr', 'n_cmaq_ex_sr.mean', -->
-<!--                'n_cmaq_ex_sr_sens.mean',   -->
-<!--                'n_cmaq_ex_sr_forag.mean', -->
-<!--                'n_cmaq_ex_sr_cyano.mean',  -->
-<!--                'n_cmaq_ex_compn.mean'),  -->
-<!--         col.names=c('Year', 'Richness', 'Sensitive richness',  -->
-<!--                     'Forage lichen abund', 'Cyanolichen abund',  -->
-<!--                     'Comm comp'),  -->
-<!--         caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on CMAQ modeled deposition.') -->
-<!-- ``` -->
-
-
-\newpage
-
-
 ## Sulfur
-
-Lichen-based CL exceedances for sulfur deposition (S), as a yearly mean (kg ha^-1^ y^-1^). Negative values are safety margin below threshold, positive values are exceedance above threshold. "Recent 5 y" covers the 5 years _immediately_ preceding this report. Exceedances are calculated based on three different metrics: raw lichen airscores, climate-adjusted airscores, or CMAQ modeled deposition values.
 
 ### S exceedance: raw lichen airscores
 
 ```{r table_exceedance_s_A}
 get_tab(pick = rx(), 
-        xvar=c('fiveyr', 's_raw_ex_sr.mean', 's_raw_ex_sr_sens.mean',
+        xvar=c('tenyr', 's_raw_ex_sr.mean', 's_raw_ex_sr_sens.mean',
                's_raw_ex_sr_forag.mean', 's_raw_ex_sr_cyano.mean', 
                's_raw_ex_compn.mean'), 
-        col.names=c('Five-year interval', 'Richness', 'Sensitive richness', 
+        col.names=c('Ten-year interval', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on raw lichen airscores.')
+        caption= 'CL exceedances for mean sulfur deposition (kg S ha^-1^ y^-1^), based on raw lichen airscores.')
 ```
 
 ### S exceedance: climate-adjusted lichen airscores
 
 ```{r table_exceedance_s_B}
 get_tab(pick = rx(), 
-        xvar=c('fiveyr', 's_adj_ex_sr.mean', 's_adj_ex_sr_sens.mean',   
+        xvar=c('tenyr', 's_adj_ex_sr.mean', 's_adj_ex_sr_sens.mean',   
                's_adj_ex_sr_forag.mean','s_adj_ex_sr_cyano.mean', 
                's_adj_ex_compn.mean'),
-        col.names=c('Year', 'Richness', 'Sensitive richness', 
+        col.names=c('Ten-year interval', 'Richness', 'Sensitive richness', 
                     'Forage lichen abund', 'Cyanolichen abund', 
                     'Comm comp'), 
-        caption= 'CL exceedances for nitrogen deposition (S), as a yearly mean (kg ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
+        caption= 'CL exceedances for mean sulfur deposition (kg S ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
 ```
-
-<!-- ### S exceedance: CMAQ modeled deposition -->
-
-<!-- ```{r table_exceedance_s_C} -->
-<!-- get_tab(pick = rx(),  -->
-<!--         xvar=c('fiveyr', 's_cmaq_ex_sr.mean', -->
-<!--                's_cmaq_ex_sr_sens.mean',   -->
-<!--                's_cmaq_ex_sr_forag.mean', -->
-<!--                's_cmaq_ex_sr_cyano.mean',  -->
-<!--                's_cmaq_ex_compn.mean'),  -->
-<!--         col.names=c('Year', 'Richness', 'Sensitive richness',  -->
-<!--                     'Forage lichen abund', 'Cyanolichen abund',  -->
-<!--                     'Comm comp'),  -->
-<!--         caption= 'CL exceedances for nitrogen deposition (N), as a yearly mean (kg ha^-1^ y^-1^), based on CMAQ modeled deposition.') -->
-<!-- ``` -->
 
 
 \newpage
@@ -598,7 +414,7 @@ WAQVs are supported by monitoring changes in “sensitive receptors” like epip
 
 ## Sensitive receptor indicators
 
-For WSP reporting of air quality, “sensitive receptor indicators” can be estimated by the presence and abundance of lichen species.  Nationally-consistent FHM/FIA surveys of lichen communities let us score and classify species by their relative pollution tolerance, and to calculate community metrics across all species at a site.  Community metrics are more robust than tracking single species because the absence of a single species offers only circumstantial evidence of air quality (what if the species simply wasn't able to disperse to or tolerate microclimate at that site?).  The joint absence of multiple pollution-intolerant species provides much stronger evidence of air-quality impacts.  <!-- Lichen-based air scores and critical loads can describe patterns of atmospheric deposition.   -->
+For WSP reporting of air quality, “sensitive receptor indicators” can be estimated by the presence and abundance of lichen species.  Nationally-consistent FHM/FIA surveys of lichen communities let us score and classify species by their relative pollution tolerance, and to calculate community metrics across all species at a site.  Community metrics are more robust than tracking single species because the absence of a single species offers only circumstantial evidence of air quality (what if the species simply wasn't able to disperse to or tolerate microclimate at that site?).  The joint absence of multiple pollution-intolerant species provides much stronger evidence of air-quality impacts.
 
 ### Indicator: Air scores
 
@@ -609,13 +425,12 @@ Individual species' sensitivities are the value of N or S deposition (kg ha^-1^ 
 A critical load (CL) is the air pollutant deposition rate expected to result in harmful ecosystem changes.  Exceedance is the degree to which locally observed deposition goes beyond an established CL.  Lichen-based CLs were established in prior work (Geiser et al. 2019).  Specifically, lichen-based CLs are the deposition rates at which we expect changes in 1) total species richness, 2) sensitive species richness, 3) forage lichen abundance, 4) cyanolichen abundance, and 5) community compositions (see **[next section](#critical-loads-we-used)**).
 
 ## Conservation status
-Conservation rankings follow NatureServe and COSEWIC.  Species considered 'at risk' here are those ranked by NatureServe as Critically Imperiled, Imperiled, or Vulnerable, and/or those ranked by COSEWIC as Endangered, Special Concern, or Threatened.  
+
+Conservation rankings follow NatureServe (https://www.natureserve.org/).  Species considered 'at risk' here are those ranked by NatureServe as Critically Imperiled, Imperiled, or Vulnerable, and/or those ranked by COSEWIC as Endangered, Special Concern, or Threatened.  
 
 ## Critical loads we used
 
-We used critical loads from Table 3 in Geiser et al. (2019).  These critical loads are invariant to geography and so apply nationwide. See:  
-
-Geiser, L., P. Nelson, S. Jovan, H. Root, and C. Clark. 2019. Assessing ecological risks from atmospheric deposition of nitrogen and sulfur to US forests using epiphytic macrolichens. Diversity 11 (87):1-29. [doi:10.3390/d11060087](https://doi.org/10.3390/d11060087){target="_blank"}  
+We used critical loads from Table 3 in Geiser et al. (2019).  These critical loads are invariant to geography and so apply nationwide. Critical loads in this table are deposition levels resulting in $\geq20\%$ decrease in the richness or abundance. 
 
 \  
 
@@ -634,6 +449,10 @@ knitr::kable(tab, format='pandoc', row.names = F, longtable = T,
              col.names = c('Lichen metric', 'N deposition', 'S deposition'))
 ```
 
+See the article:  
+
+>Geiser, L., P. Nelson, S. Jovan, H. Root, and C. Clark. 2019. Assessing ecological risks from atmospheric deposition of nitrogen and sulfur to US forests using epiphytic macrolichens. _Diversity_ 11 (87):1-29. [doi:10.3390/d11060087](https://doi.org/10.3390/d11060087){target="_blank"}  
+
 <!-- ### Trophic scores -->
 <!-- Lichen species can be assigned to three main groups based on pollution tolerance: oligo-, meso- and eutrophic (from low to high tolerance). Sites can be scored by the ratio of oligotrophic species richness _vs._ the total richness of oligotrophic and eutrophic species.  By this metric, relatively "clean" sites have high trophic scores (maximum = 1) driven by pollution-intolerant species, while "polluted" sites have lower trophic scores (minimum = 0) driven by their absence. Trophic scores are unitless and range from 0--1 for N or S. -->
 
@@ -649,19 +468,21 @@ knitr::kable(tab, format='pandoc', row.names = F, longtable = T,
 `get_richness` <- function (pick, ...) {
   NROW(s[[which(names(s) == pick)]])
 }
-`get_n_plots` <- function (pick, ...) {
-  NROW(d[which(d$wa==pick),])
-}
+# `get_n_plots` <- function (pick, ...) {
+#   NROW(d[which(d$wa==pick),])
+# }
 spp_obs    <- get_richness(pick = rx())
-plot_obs   <- get_n_plots(pick = rx())
-spp_exp    <- 4.01 + 25.81*log(plot_obs) # log-linear eqn
+# plot_obs   <- n
+spp_exp    <- 4.01 + 25.81*log(n) # log-linear eqn
 ```
 
-This Wilderness unit contained at least `r spp_obs` macrolichen species observed in `r plot_obs` plots, which is **`r ifelse(spp_obs > spp_exp, 'GREATER THAN', 'LESS THAN')`** the expected `r round(spp_exp, 1)` species.  Expected value is based on a species accumulation curve (depicted by the line below) where the expected number of species $y$ depends on sampling $x$ new plots: $y = 4.01 + 25.81 \times log(x)$.
+Number of surveyed plots:   **`r n`**  
+Number of species observed: **`r spp_obs`**  
+Number of species expected: **`r round(spp_exp, 1)`** 
 
 \  
 
-```{r plot-sampling-completeness, fig.height=2.75, fig.cap='Species accumulation curve.'}
+```{r plot-sampling-completeness, fig.height=2.75, fig.cap='Species accumulation curve.  Expected value is based on a species accumulation curve (the line) where the expected number of species $y$ depends on sampling $x$ new plots: $y = 4.01 + 25.81 \\times log(x)$.'}
 x <- 1:2500                              # n plots sampled
 y <- 4.01 + 25.81*log(x)                 # n species expected
 set_par(1)
@@ -671,9 +492,9 @@ plot(x, y, type='l', log='x', xaxt='n', xlim=c(1,2500),
 atx  <- outer(1:9, 10^(0:3))
 labx <- ifelse(log10(atx) %% 1 == 0, atx, NA)
 axis(1, at=atx, labels=labx, las=1)
-lines(rep(plot_obs,2), c(spp_exp,spp_obs))
-points(plot_obs, spp_exp, pch=21, cex=1.2, bg='white')
-points(plot_obs, spp_obs, pch=16, cex=1.2)
+lines(rep(n,2), c(spp_exp,spp_obs))
+points(n, spp_exp, pch=21, cex=1.2, bg='white')
+points(n, spp_obs, pch=16, cex=1.2)
 legend('topleft', pch=c(16,21), bty='n', cex=0.7, pt.cex=1.0,
        legend=c(paste0('Observed = ', spp_obs),
                 paste0('Expected = ', round(spp_exp,1))))
@@ -696,18 +517,14 @@ legend('topleft', pch=c(16,21), bty='n', cex=0.7, pt.cex=1.0,
 x <- get_natureserve(pick = rx())
 ```
 
-Number of species observed in total: **`r x$rich`**.  
-Number of species with 'at risk' conservation status: **`r x$atrisk`**.  
-Percentage of rated species with 'sensitive (oligotroph)' N tolerance: **`r x$nsens`\%**.  
-Percentage of rated species with 'sensitive' S tolerance: **`r x$ssens`\%**.  
+Number of species observed in total: **`r x$rich`**  
+Number of species with 'at risk' conservation status: **`r x$atrisk`**  
+Percentage of rated species with 'sensitive (oligotroph)' N tolerance: **`r x$nsens`\%**  
+Percentage of rated species with 'sensitive' S tolerance: **`r x$ssens`\%**  
 
 ## Species list
 
-List of all macrolichens observed in plots at `r input$x` over the years `r rng[1]` to `r rng[2]`.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  
-
-Functional groups ('Fxl grp') include cyanolichens ('cyano') capable of nitrogen-fixation, and forage lichens ('forage') important for wildlife.  'N sensitivity' for each species ranges from low to high tolerance (oligo-, meso-, eutroph), as does 'S sensitivity' (sensitive, intermediate, tolerant).  Critical loads ('CL') are deposition levels resulting in 20\% decrease in occurrence.  
-
-'Conservation' = conservation status from NatureServe (https://www.natureserve.org/), which assigns each species both a global (G) and state (S) rank on a scale of 1 to 5 (1=Critically imperiled; 2=Imperiled; 3=Vulnerable; 4=Apparently secure; 5=Secure).  
+**List of all macrolichens observed in plots at `r input$x` over the years `r rng[1]` to `r rng[2]`**.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  _Functional groups_ ('Fxl grp'): include cyanolichens ('cyano') capable of nitrogen-fixation, and forage lichens ('forage') important for wildlife.  _Sensitivity_: 'N sensitivity' for each species ranges from low to high tolerance (oligo-, meso-, eutroph), as does 'S sensitivity' (sensitive, intermediate, tolerant).  _Critical loads_ ('CL') are deposition levels resulting in >20\% decrease in occurrence.  _Conservation_: conservation status is from NatureServe (https://www.natureserve.org/), which assigns each species both a global (G) and state (S) rank on a scale of 1 to 5 (1=Critically imperiled; 2=Imperiled; 3=Vulnerable; 4=Apparently secure; 5=Secure).  
 
 ```{r species_list}
 `get_tab_species` <- function (pick, ...) {
