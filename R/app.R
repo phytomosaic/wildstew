@@ -7,6 +7,12 @@
 #
 ##      GNU General Public License, Version 3.0    ###################
 
+# This project was supported in part by an appointment to the Research
+# Participation Program at the United States Forest Service, United
+# States Department of Agriculture, administered by the Oak Ridge
+# Institute for Science and Education through an interagency agreement
+# between the U.S. Department of Energy and USFS.
+
 require(shiny)
 require(rmarkdown)
 require(knitr)
