@@ -565,7 +565,9 @@ Conservation rankings follow NatureServe (https://www.natureserve.org/).  Specie
 
 We used critical loads from Table 3 in Geiser et al. (2019).  These critical loads are invariant to geography and so apply nationwide. Critical loads in this table are deposition levels resulting in $\geq20\%$ decrease in the richness or abundance of the given lichen metric. 
 
+
 \  
+
 
 ```{r critical_loads_tab}
 tab <- data.frame(Metric = c('Species richness',
@@ -588,6 +590,18 @@ See the article:
 
 <!-- ### Trophic scores -->
 <!-- Lichen species can be assigned to three main groups based on pollution tolerance: oligo-, meso- and eutrophic (from low to high tolerance). Sites can be scored by the ratio of oligotrophic species richness _vs._ the total richness of oligotrophic and eutrophic species.  By this metric, relatively "clean" sites have high trophic scores (maximum = 1) driven by pollution-intolerant species, while "polluted" sites have lower trophic scores (minimum = 0) driven by their absence. Trophic scores are unitless and range from 0--1 for N or S. -->
+
+\  
+
+## Why monitor lichens? Ecological functions
+
+Lichens are commonly divided into three "functional groups" based on ecological functions: matrix lichens, forage lichens, and cyanolichens.
+
+Forage lichens (including "old-man's beard" and "witches' hair" lichens) provide food, nesting materials and suitable habitat for many animals (from insects to amphibians to small mammals).   Large ungulates like deer, elk or caribou may depend on forage lichens to eat during lean winter months.  Loss of these pollution-sensitive lichens might have implications for the wildlife that depend on them.
+
+Cyanolichens (including "lungwort" lichens) contain cyanobacterial partners that convert nitrogen from the air into a form which forest vegetation can absorb -- when cyanolichens fall to the forest floor and release this nitrogen, they serve as "forest fertilizer"! Despite this capacity, cyanolichens are among the most intolerant of poor air quality, and so their presence indicates clean air.
+
+Matrix lichens are any that are not forage or cyanolichens.  They are often more pollution-tolerant than those two groups, and perform an array of ecosystem functions. These range from...
 
 
 \newpage
