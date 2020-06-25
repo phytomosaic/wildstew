@@ -111,7 +111,7 @@ Most recent ten-year sampling period: **`r dec`**
 
 ## Nitrogen snapshot
 
-```{r plot-plot_valuebar_N, fig.height=2.25, fig.width=6.0, fig.cap='Observed N deposition (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
+```{r plot-plot_valuebar_N, warning=FALSE, message=FALSE, fig.height=2.25, fig.width=6.0, fig.cap='Observed N deposition (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
 ### plot the valuebar for observed CMAQ deposition
 `plot_valuebar` <- function(pick, brk=b, select='n', ...){
      b      <- brk
@@ -162,7 +162,7 @@ plot_valuebar(pick = rx(), brk=b, select='n',
 
 ## Sulfur snapshot
 
-```{r plot_valuebar_S, fig.height=2.25, fig.width=6.0, fig.cap='Observed S deposition for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
+```{r plot_valuebar_S, warning=FALSE, message=FALSE, fig.height=2.25, fig.width=6.0, fig.cap='Observed S deposition for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
 ### plot the valuebar for observed CMAQ S deposition
 b <- b+(b*0.05) # new (loosely based on 20/50/80)
 plot_valuebar(pick = rx(), brk=b, select='s',
@@ -177,247 +177,137 @@ plot_valuebar(pick = rx(), brk=b, select='s',
 
 ```{r plot-map, fig.height=6.5, fig.width=6.49, fig.cap='Local area map.  Red outline is Wilderness boundary, black points are survey plot locations, shaded contours are terrain elevations above sea level.', warning=FALSE}
 ###  map wilderness boundary and sampling locations
-`map_points` <- function (pick=pick, pts=d, shp=w, ras=dem, lwd.cont=1,
-                          ...) {
-     aea_prj <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5
+`map_points` <- function (pick=pick, pts=d, shp=w, ras=dem, 
+                          lwd.cont=1, ...) {
+  aea_prj <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5
         +lon_0=-110 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
-     trg_prj <- projection(shp)
-     shp  <- shp[shp$NAME == pick,]  # select your wilderness
-     pts  <- pts[pts$wa == pick,]    # select your Wilderness
-     if(all(is.na(pts$lon)) | all(is.na(pts$lon))) {
-          # stop('Need lat/lon data to map')
-          e <- extent(shp) * 1.25
-          has_points <- FALSE
-     } else {
-          has_points <- TRUE
-          `make_xy` <- function(xy, crs, ...){
-               xy <- as.data.frame(xy)
-               xy <- xy[!(is.na(xy$lon) | is.na(xy$lat)),] # rm NAs
-               coordinates(xy) <- ~lon+lat
-               proj4string(xy) <- CRS('+init=epsg:4269') # NAD83 dec degree
-               return(spTransform(xy, crs))
-          }
-          ppts <- make_xy(pts, crs=trg_prj)
-          near <- c(rgeos::gDistance(spTransform(ppts, CRS(aea_prj)),
-                                     spTransform(shp, CRS(aea_prj)),
-                                     byid=T) < 3000) # reject pts > 3 km
-          ppts <- ppts[near,]
-          e <- cbind(matrix(extent(shp)),matrix(extent(ppts)))
-          e <- c(min(e[1,]),max(e[2,]),min(e[3,]),max(e[4,])) # combined ext
-          `haversine` <- function(loc1, loc2) { # geographic distance
-               lat1 <- loc1[1] * pi / 180
-               lon1 <- loc1[2] * pi / 180
-               lat2 <- loc2[1] * pi / 180
-               lon2 <- loc2[2] * pi / 180
-               R    <- 6371.0  # avg earth radius [km]
-               dlat <- lat2 - lat1
-               dlon <- lon2 - lon1
-               a <- sin(dlat/2)^2 + cos(lat1) * cos(lat2) * sin(dlon/2)^2
-               c <- 2 * atan2(sqrt(a), sqrt(1-a))
-               return(R * c)
-          }
-          dy <- haversine(c(e[3],e[1]), c(e[4],e[1])) # kilometers y-axis
-          dx <- haversine(c(e[3],e[1]), c(e[3],e[2])) # kilometers x-axis
-          e  <- extent(e)
-          if (dy > dx) {
-               e[1:2] <- matrix(e * dy/dx)[1:2,] # expand x
-          } else {
-               e[3:4] <- matrix(e * dx/dy)[3:4,] # expand y
-          }
-          dx <- as.numeric( # how large a scale bar to make?
-               as.character(
-                    cut(dx,breaks=c(0,5,50,200,Inf),labels=c(1,5,10,50),incl=T)
-               )
-          )
-          e  <- extent(e) * 1.25 # slight expansion
-     }
-     ras <- disaggregate(crop(ras, e), 10, method='bilinear')
-     ### custom function for filled contours....
-     `fillcont` <- function (x, maxpixels = 1e+05, ...) {
-          `fc` <-  function (
-               x = seq(0, 1, length.out = nrow(z)),
-               y = seq(0, 1, length.out = ncol(z)),
-               z,
-               xlim = range(x, finite = TRUE),
-               ylim = range(y, finite = TRUE),
-               zlim = range(z, finite = TRUE),
-               levels = pretty(zlim, nlevels),
-               nlevels = 20,
-               color.palette = function(n) viridis::viridis(n,begin=0,end=0.9),
-               col = color.palette(length(levels) - 1), ...) {
-               if (missing(z)) {
-                    if (!missing(x)) {
-                         if (is.list(x)) {
-                              z <- x$z
-                              y <- x$y
-                              x <- x$x
-                         }
-                         else {
-                              z <- x
-                              x <- seq.int(0, 1, length.out = nrow(z))
-                         }
-                    }
-                    else stop("no 'z' matrix specified")
-               }
-               else if (is.list(x)) {
-                    y <- x$y
-                    x <- x$x
-               }
-               if (any(diff(x) <= 0) || any(diff(y) <= 0))
-                    stop("increasing 'x' and 'y' values expected")
-               plot.new()
-               plot.window(xlim, ylim, "", xaxs = "i", yaxs = "i", asp = NA)
-               .filled.contour(x, y, z, levels, col)
-          }
-          x <- sampleRegular(x, maxpixels, asRaster = T, useGDAL = T)
-          X <- xFromCol(x, 1:ncol(x))
-          Y <- yFromRow(x, nrow(x):1)
-          Z <- t(matrix(getValues(x), ncol = x@ncols, byrow=T)[nrow(x):1,])
-          lonlat <- couldBeLonLat(x, warnings = FALSE)
-          asp <- list(...)$asp
-          if (is.null(asp)) {
-               if (lonlat) {
-                    ym <- mean(c(x@extent@ymax, x@extent@ymin))
-                    asp <- 1/cos((ym * pi)/180)
-               }
-               else {
-                    asp <- 1
-               }
-               fc(x = X, y = Y, z = Z, asp = asp, ...)
+  trg_prj <- projection(shp)
+  shp  <- shp[shp$NAME == pick,]  # select your wilderness
+  pts  <- pts[pts$wa == pick,]    # select your Wilderness
+  if(all(is.na(pts$lon)) | all(is.na(pts$lon))) {
+    e <- extent(shp) * 1.25
+    has_points <- FALSE
+  } else {
+    has_points <- TRUE
+    `make_xy` <- function(xy, crs, ...){
+      xy <- as.data.frame(xy)
+      xy <- xy[!(is.na(xy$lon) | is.na(xy$lat)),] # rm NAs
+      coordinates(xy) <- ~lon+lat
+      proj4string(xy) <- CRS('+init=epsg:4269') # NAD83 dec degree
+      return(spTransform(xy, crs))
+    }
+    ppts <- make_xy(pts, crs=trg_prj)
+    near <- c(rgeos::gDistance(spTransform(ppts, CRS(aea_prj)),
+                               spTransform(shp, CRS(aea_prj)),
+                               byid=T) < 3000) # reject pts > 3 km
+    ppts <- ppts[near,]
+    e <- cbind(matrix(extent(shp)),matrix(extent(ppts)))
+    e <- c(min(e[1,]),max(e[2,]),min(e[3,]),max(e[4,])) # combined ext
+    `haversine` <- function(loc1, loc2) { # geographic distance
+      lat1 <- loc1[1] * pi / 180
+      lon1 <- loc1[2] * pi / 180
+      lat2 <- loc2[1] * pi / 180
+      lon2 <- loc2[2] * pi / 180
+      R    <- 6371.0  # avg earth radius [km]
+      dlat <- lat2 - lat1
+      dlon <- lon2 - lon1
+      a <- sin(dlat/2)^2 + cos(lat1) * cos(lat2) * sin(dlon/2)^2
+      c <- 2 * atan2(sqrt(a), sqrt(1-a))
+      return(R * c)
+    }
+    dy <- haversine(c(e[3],e[1]), c(e[4],e[1])) # kilometers y-axis
+    dx <- haversine(c(e[3],e[1]), c(e[3],e[2])) # kilometers x-axis
+    e  <- extent(e)
+    if (dy > dx) {
+      e[1:2] <- matrix(e * dy/dx)[1:2,] # expand x
+    } else {
+      e[3:4] <- matrix(e * dx/dy)[3:4,] # expand y
+    }
+    dx <- as.numeric( # how large a scale bar to make?
+      as.character(
+        cut(dx,breaks=c(0,5,50,200,Inf),labels=c(1,5,10,50),incl=T)
+      )
+    )
+    e  <- extent(e) * 1.25 # slight expansion
+  }
+  ras <- disaggregate(crop(ras, e), 10, method='bilinear')
+  ### custom function for filled contours....
+  `fillcont` <- function (x, maxpixels = 1e+05, ...) {
+    `fc` <-  function (
+      x = seq(0, 1, length.out = nrow(z)),
+      y = seq(0, 1, length.out = ncol(z)),
+      z,
+      xlim = range(x, finite = TRUE),
+      ylim = range(y, finite = TRUE),
+      zlim = range(z, finite = TRUE),
+      levels = pretty(zlim, nlevels),
+      nlevels = 20,
+      color.palette = function(n) viridis::viridis(n,begin=0,end=0.9),
+      col = color.palette(length(levels) - 1), ...) {
+      if (missing(z)) {
+        if (!missing(x)) {
+          if (is.list(x)) {
+            z <- x$z
+            y <- x$y
+            x <- x$x
           }
           else {
-               fc(x = X, y = Y, z = Z, ...)
+            z <- x
+            x <- seq.int(0, 1, length.out = nrow(z))
           }
-     }
-     fillcont(ras, nlevels=20, lwd=lwd.cont)
-     plot(shp, col='transparent', border='red', add=T, lwd=2)
-     if (has_points) {
-          points(ppts, pch=16, col='#000000', cex=1)
-          scalebar(d=dx, xy=c(e[1] + abs(diff(e[1:2]))*0.05,
-                              e[3] + abs(diff(e[3:4]))*0.08),
-                   type='bar', divs=2, below=paste0('\n', dx, ' km'),
-                   adj=c(0.5,-1), lab='', lwd=2, cex=0.7, font=2)    
-     }
+        }
+        else stop("no 'z' matrix specified")
+      }
+      else if (is.list(x)) {
+        y <- x$y
+        x <- x$x
+      }
+      if (any(diff(x) <= 0) || any(diff(y) <= 0))
+        stop("increasing 'x' and 'y' values expected")
+      plot.new()
+      plot.window(xlim, ylim, "", xaxs = "i", yaxs = "i", asp = NA)
+      .filled.contour(x, y, z, levels, col)
+    }
+    x <- sampleRegular(x, maxpixels, asRaster = T, useGDAL = T)
+    X <- xFromCol(x, 1:ncol(x))
+    Y <- yFromRow(x, nrow(x):1)
+    Z <- t(matrix(getValues(x), ncol = x@ncols, byrow=T)[nrow(x):1,])
+    lonlat <- couldBeLonLat(x, warnings = FALSE)
+    asp <- list(...)$asp
+    if (is.null(asp)) {
+      if (lonlat) {
+        ym <- mean(c(x@extent@ymax, x@extent@ymin))
+        asp <- 1/cos((ym * pi)/180)
+      }
+      else {
+        asp <- 1
+      }
+      fc(x = X, y = Y, z = Z, asp = asp, ...)
+    }
+    else {
+      fc(x = X, y = Y, z = Z, ...)
+    }
+  }
+  fillcont(ras, nlevels=20, lwd=lwd.cont)
+  plot(shp, col='transparent', border='red', add=T, lwd=2)
+  if (has_points) {
+    points(ppts, pch=16, col='#000000', cex=1)
+    scalebar(d=dx, xy=c(e[1] + abs(diff(e[1:2]))*0.05,
+                        e[3] + abs(diff(e[3:4]))*0.08),
+             type='bar', divs=2, below=paste0('\n', dx, ' km'),
+             adj=c(0.5,-1), lab='', lwd=2, cex=0.7, font=2)    
+  }
 }
-# `map_points` <- function (pick=pick, pts=d, shp=w, ras=dem, lwd.cont=1,
-#                           ...) {
-#     aea_prj <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5
-#         +lon_0=-110 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
-#     trg_prj <- projection(shp)
-#     shp  <- shp[shp$NAME == pick,]  # select your wilderness
-#     pts  <- pts[pts$wa == pick,]    # select your Wilderness
-#     if(all(is.na(pts$lon)) | all(is.na(pts$lon))) {
-#         stop('Need lat/lon data to map')
-#     }
-#     `make_xy` <- function(xy, crs, ...){
-#         xy <- as.data.frame(xy)
-#         xy <- xy[!(is.na(xy$lon) | is.na(xy$lat)),] # rm NAs
-#         coordinates(xy) <- ~lon+lat
-#         proj4string(xy) <- CRS('+init=epsg:4269') # NAD83 dec degree
-#         return(spTransform(xy, crs))
-#     }
-#     ppts <- make_xy(pts, crs=trg_prj)
-#     near <- c(rgeos::gDistance(spTransform(ppts, CRS(aea_prj)),
-#                                spTransform(shp, CRS(aea_prj)),
-#                                byid=T) < 3000) # reject pts > 3 km
-#     ppts <- ppts[near,]
-#     e <- cbind(matrix(extent(shp)),matrix(extent(ppts)))
-#     e <- c(min(e[1,]),max(e[2,]),min(e[3,]),max(e[4,])) # combined ext
-#     `haversine` <- function(loc1, loc2) { # geographic distance
-#         lat1 <- loc1[1] * pi / 180
-#         lon1 <- loc1[2] * pi / 180
-#         lat2 <- loc2[1] * pi / 180
-#         lon2 <- loc2[2] * pi / 180
-#         R    <- 6371.0  # avg earth radius [km]
-#         dlat <- lat2 - lat1
-#         dlon <- lon2 - lon1
-#         a <- sin(dlat/2)^2 + cos(lat1) * cos(lat2) * sin(dlon/2)^2
-#         c <- 2 * atan2(sqrt(a), sqrt(1-a))
-#         return(R * c)
-#     }
-#     dy <- haversine(c(e[3],e[1]), c(e[4],e[1])) # kilometers y-axis
-#     dx <- haversine(c(e[3],e[1]), c(e[3],e[2])) # kilometers x-axis
-#     e  <- extent(e)
-#     if (dy > dx) {
-#         e[1:2] <- matrix(e * dy/dx)[1:2,] # expand x
-#     } else {
-#         e[3:4] <- matrix(e * dx/dy)[3:4,] # expand y
-#     }
-#     dx <- as.numeric( # how large a scale bar to make?
-#         as.character(
-#             cut(dx,breaks=c(0,5,50,200,Inf),labels=c(1,5,10,50),incl=T)
-#         )
-#     )
-#     e  <- extent(e) * 1.25 # slight expansion
-#     ras <- disaggregate(crop(ras, e), 10, method='bilinear')
-#     ### custom function for filled contours....
-#     `fillcont` <- function (x, maxpixels = 1e+05, ...) {
-#         `fc` <-  function (
-#             x = seq(0, 1, length.out = nrow(z)),
-#             y = seq(0, 1, length.out = ncol(z)),
-#             z,
-#             xlim = range(x, finite = TRUE),
-#             ylim = range(y, finite = TRUE),
-#             zlim = range(z, finite = TRUE),
-#             levels = pretty(zlim, nlevels),
-#             nlevels = 20,
-#             color.palette = function(n) viridis::viridis(n, begin=0, end=0.9),
-#             col = color.palette(length(levels) - 1), ...) {
-#             if (missing(z)) {
-#                 if (!missing(x)) {
-#                     if (is.list(x)) {
-#                         z <- x$z
-#                         y <- x$y
-#                         x <- x$x
-#                     }
-#                     else {
-#                         z <- x
-#                         x <- seq.int(0, 1, length.out = nrow(z))
-#                     }
-#                 }
-#                 else stop("no 'z' matrix specified")
-#             }
-#             else if (is.list(x)) {
-#                 y <- x$y
-#                 x <- x$x
-#             }
-#             if (any(diff(x) <= 0) || any(diff(y) <= 0))
-#                 stop("increasing 'x' and 'y' values expected")
-#             plot.new()
-#             plot.window(xlim, ylim, "", xaxs = "i", yaxs = "i", asp = NA)
-#             .filled.contour(x, y, z, levels, col)
-#         }
-#         x <- sampleRegular(x, maxpixels, asRaster = T, useGDAL = T)
-#         X <- xFromCol(x, 1:ncol(x))
-#         Y <- yFromRow(x, nrow(x):1)
-#         Z <- t(matrix(getValues(x), ncol = x@ncols, byrow=T)[nrow(x):1,])
-#         lonlat <- couldBeLonLat(x, warnings = FALSE)
-#         asp <- list(...)$asp
-#         if (is.null(asp)) {
-#             if (lonlat) {
-#                 ym <- mean(c(x@extent@ymax, x@extent@ymin))
-#                 asp <- 1/cos((ym * pi)/180)
-#             }
-#             else {
-#                 asp <- 1
-#             }
-#             fc(x = X, y = Y, z = Z, asp = asp, ...)
-#         }
-#         else {
-#             fc(x = X, y = Y, z = Z, ...)
-#         }
-#     }
-#     # contour(ras, col=viridis::viridis(11,1,0,0.9), nlevels=10,
-#     #         drawlabels=F, axes=F, lwd=lwd.cont)
-#     fillcont(ras, nlevels=20, lwd=lwd.cont)
-#     plot(shp, col='transparent', border='red', add=T, lwd=2)
-#     points(ppts, pch=16, col='#000000', cex=1)
-#     scalebar(d=dx, xy=c(e[1] + abs(diff(e[1:2]))*0.05,
-#                         e[3] + abs(diff(e[3:4]))*0.08),
-#              type='bar', divs=2, below=paste0('\n', dx, ' km'),
-#              adj=c(0.5,-1), lab='', lwd=2, cex=0.7, font=2)
-# }
-map_points(pick = rx(), pts=d, shp=w, ras=dem)
+### error catch -- dont plot if valid name not in shapefile
+`try_map` <- function() {
+     tryCatch(map_points(pick = rx(), pts=d, shp=w, ras=dem),
+              error = function(e) {
+                   plot(1:10, 1:10,type='n',axes=FALSE,ann=FALSE)
+                   text(5,5, labels='Map not available', adj=c(0.5,0.5))
+              })
+}
+try_map()
+# map_points(pick = rx(), pts=d, shp=w, ras=dem)
 ```
 
 
