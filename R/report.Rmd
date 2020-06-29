@@ -175,7 +175,7 @@ plot_valuebar(pick = rx(), brk=b, select='s',
 
 ## Area map
 
-```{r plot-map, fig.height=6.5, fig.width=6.49, fig.cap='Local area map.  Red outline is Wilderness boundary, black points are survey plot locations, shaded contours are terrain elevations above sea level.', warning=FALSE}
+```{r plot-map, fig.height=6.5, fig.width=6.49, fig.cap='Local area map.  Red outline is Wilderness boundary, black points are survey plot locations, shaded contours are terrain elevations above sea level.  Boundaries are approximate.', warning=FALSE}
 ###  map wilderness boundary and sampling locations
 `map_points` <- function (pick=pick, pts=d, shp=w, ras=dem, 
                           lwd.cont=1, ...) {
@@ -302,8 +302,8 @@ plot_valuebar(pick = rx(), brk=b, select='s',
 `try_map` <- function() {
      tryCatch(map_points(pick = rx(), pts=d, shp=w, ras=dem),
               error = function(e) {
-                   plot(1:10, 1:10,type='n',axes=FALSE,ann=FALSE)
-                   text(5,5, labels='Map not available', adj=c(0.5,0.5))
+                   plot(1:10, 1:10, type='n', axes=FALSE, ann=FALSE)
+                   text(5,5,labels='Map not available',adj=c(0.5,0.5))
               })
 }
 try_map()

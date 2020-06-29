@@ -22,7 +22,9 @@ require(viridis)
 load('d.rda', verbose=T)  # data in same directory as app.R
 load('a.rda', verbose=T)  # data in same directory as app.R
 load('s.rda', verbose=T)  # data in same directory as app.R
-w       <- readOGR(dsn='.', 'wilderness_2017') # shapefiles
+### UPDATE: newest shapefile as of 25 Jun 2020:
+###    http://www.wilderness.net/GIS/Wilderness_Areas.zip
+w       <- readOGR(dsn='.', 'wilderness_2019') # shapefiles
 dem     <- raster('dem_usa_unclipped.tif') # DEM raster
 choices <- sort(unique(as.character(a$warea)))
 
