@@ -3,17 +3,18 @@ title: \vspace{-1.5cm} Wilderness Air Quality Values \break for `r input$x`
 date: 'Report prepared: `r format(Sys.time(), "%d %B %Y")`'
 toccolor: 'black'
 header-includes:
-- \usepackage{hyperref} \hypersetup{pdfstartview={XYZ null null 1.00}, colorlinks = true, linkcolor = red, urlcolor = red}
-- \usepackage{float} \floatplacement{figure}{H}
-- \usepackage[font=small,skip=0pt]{caption}
-- \usepackage{wrapfig}
-- \usepackage{booktabs}
-- \usepackage{longtable}
+   - \usepackage{hyperref} \hypersetup{pdfstartview={XYZ null null 1.00}, colorlinks = true, linkcolor = red, urlcolor = red}
+   - \usepackage{float} \floatplacement{figure}{H}
+   - \usepackage[font=small,skip=0pt]{caption}
+   - \usepackage{wrapfig}
+   - \usepackage{booktabs}
+   - \usepackage{longtable}
 ---
 
 ```{r setup-options, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 options(knitr.kable.NA = '')
+has_ttest <- FALSE
 ```
 
 ```{r function-setup-functions, include=FALSE}
