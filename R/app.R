@@ -54,16 +54,13 @@ ui <- fluidPage(
                 ),
                 ### main panel
                 mainPanel(
-
                         ### text for selected wilderness area
                         h2(textOutput('selected_wa')),
-
                         ### footer
                         hr(),
                         div(class='footer',
                             p('Warning! This app is in beta stage for trial only!'),
                             p('Data are provisional and subject to change --'),
-                            # p('Do not use for actual reporting!'),
                             p('Questions? Comments? Contact: ',
                               a('robert.smith3@usda.gov',
                                 href='robert.smith3@usda.gov',
@@ -105,10 +102,6 @@ server <- function(input, output) {
                         src       <- normalizePath('report.Rmd')
                         src_png_a <- normalizePath('usfs.png')
                         src_png_b <- normalizePath('bothlichens.png')
-
-                        # src_png_b <- normalizePath('bryoria.png')
-                        # src_png_c <- normalizePath('pseudocyphellaria.png')
-
                         owd <- setwd(tempdir())
                         on.exit(setwd(owd))
                         file.copy(src, 'report.Rmd',
@@ -117,9 +110,6 @@ server <- function(input, output) {
                                   overwrite=TRUE)
                         file.copy(src_png_b, 'bothlichens.png',
                                   overwrite=TRUE)
-                        # file.copy(src_png_c, 'pseudocyphellaria.png',
-                        #           overwrite=TRUE)
-
                         out <- rmarkdown::render(
                                 'report.Rmd',
                                 switch(

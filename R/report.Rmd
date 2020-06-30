@@ -538,9 +538,7 @@ Conservation rankings follow NatureServe (https://www.natureserve.org/).  Specie
 
 We used critical loads from Table 3 in Geiser et al. (2019).  These critical loads are invariant to geography and so apply nationwide. Critical loads in this table are deposition levels resulting in $\geq20\%$ decrease in the richness or abundance of the given lichen metric. 
 
-
 \  
-
 
 ```{r critical_loads_tab}
 tab <- data.frame(Metric = c('Species richness',
@@ -561,14 +559,11 @@ See the article:
 
 >Geiser, L., P. Nelson, S. Jovan, H. Root, and C. Clark. 2019. Assessing ecological risks from atmospheric deposition of nitrogen and sulfur to US forests using epiphytic macrolichens. _Diversity_ 11 (87):1-29. [doi:10.3390/d11060087](https://doi.org/10.3390/d11060087){target="_blank"}  
 
-<!-- ### Trophic scores -->
-<!-- Lichen species can be assigned to three main groups based on pollution tolerance: oligo-, meso- and eutrophic (from low to high tolerance). Sites can be scored by the ratio of oligotrophic species richness _vs._ the total richness of oligotrophic and eutrophic species.  By this metric, relatively "clean" sites have high trophic scores (maximum = 1) driven by pollution-intolerant species, while "polluted" sites have lower trophic scores (minimum = 0) driven by their absence. Trophic scores are unitless and range from 0--1 for N or S. -->
-
 \  
 
 ## Why monitor lichens? Ecological functions
 
-\begin{wrapfigure}{r}{11.0cm}
+\begin{wrapfigure}{r}{5.0cm}
 \includegraphics{bothlichens.png}
 \end{wrapfigure}
 
@@ -576,9 +571,11 @@ Lichens are commonly divided into "functional groups" based on ecological functi
 
 __*Forage lichens*__ (including "old-man's beard" and "witches' hair" lichens) provide food, nesting materials and suitable habitat for many animals (from insects to amphibians to small mammals).   Large ungulates like deer, elk or caribou may depend on forage lichens to eat during lean winter months.  Loss of these pollution-sensitive lichens might have implications for the wildlife that depend on them.
 
-__*Cyanolichens*__ (including "lungwort" lichens) contain cyanobacterial partners that convert nitrogen from the air into a form which forest vegetation can absorb -- when cyanolichens fall to the forest floor and release this nitrogen, they serve as "forest fertilizer"! Despite this capacity, cyanolichens are among the most intolerant of poor air quality, and so their presence indicates clean air.
+__*Cyanolichens*__ (including "lungwort" lichens) contain cyanobacterial partners that convert nitrogen from the air into a form which forest vegetation can absorb -- when cyanolichens fall to the forest floor and release this nitrogen, they serve as "forest fertilizer"!  Cyanolichens are among the most intolerant of poor air quality, so their absence may indicate deteriorating conditions.
 
-__*Matrix lichens*__ are any that are not forage or cyanolichens.  They are often more pollution-tolerant than those two groups, and perform an array of ecosystem functions.  These functions include rainfall interception, water cycle buffering, animal habitat, and bioindication of forest health.
+__*Matrix lichens*__ are any not included as forage or cyanolichens.  They are often more pollution-tolerant than those two groups, and perform an array of ecosystem functions.  These functions include rainfall interception, water cycle buffering, animal habitat, and bioindication of forest health.
+
+Paying attention to changes in lichen communities is informative -- losses of lichen functional groups can indicate declines in the ecosystem functions that they provide.
 
 
 \newpage
@@ -642,22 +639,21 @@ Number of species with 'at risk' conservation status: **`r x$atrisk`**
 Percentage of rated species with 'sensitive (oligotroph)' N tolerance: **`r x$nsens`\%**  
 Percentage of rated species with 'sensitive' S tolerance: **`r x$ssens`\%**  
 
-\newpage
-
 ## Species list
 
-**List of all macrolichens observed in plots at `r input$x` over the years `r rng[1]` to `r rng[2]`**.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  _Functional groups_ ('Fxl grp'): include cyanolichens ('cyano') and forage lichens ('forage')(see **[descriptions](#why-monitor-lichens-ecological-functions)**).  _Sensitivity_: 'N sensitivity' for each species ranges from low to high tolerance (oligo-, meso-, eutroph), as does 'S sensitivity' (sensitive, intermediate, tolerant).  _Critical loads_ ('CL') are deposition levels resulting in >20\% decrease in occurrence.  _Conservation_: is from NatureServe (https://www.natureserve.org/), which assigns each species both a global (G) and state (S) rank on a scale of 1 to 5 (1=Critically imperiled; 2=Imperiled; 3=Vulnerable; 4=Apparently secure; 5=Secure). 
+**List of all macrolichens in plots at `r input$x` from `r rng[1]` to `r rng[2]`**.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  _Functional groups_ ('Fxl grp') are cyanolichens ('cyano') and forage lichens ('forage')(see **[descriptions](#why-monitor-lichens-ecological-functions)**).  _Sensitivity_ for each species ranges from low to high tolerance for nitrogen (oligo-, meso-, eutroph) and sulfur (sensitive, intermediate, tolerant).  _Critical loads_ ('CL') are deposition levels resulting in >20\% decrease in occurrence.  _Conservation_ from NatureServe (https://www.natureserve.org/) assigns each species both a global (G) and state (S) rank on a scale of 1 to 5 (1=Critically imperiled; 2=Imperiled; 3=Vulnerable; 4=Apparently secure; 5=Secure).
 
 
 ```{r species_list}
 `get_tab_species` <- function (pick, ...) {
-  tab <- s[which(names(s) == pick)]
+  tab <- s[which(names(s) == pick)][[1]]
+  tab <- tab[order(tab$n_critload, tab$s_critload, tab$fxlgp),]
   knitr::kable(x         = tab,
                format    = 'markdown',  ### format = 'pandoc',
                row.names = FALSE,
                longtable = TRUE,
                booktabs  = TRUE,
-               caption   = 'Macrolichen species list.',
+               caption   = NULL,  ### 'Macrolichen species list.',
                escape    = FALSE,
                col.names = c('Species','Fxl grp','N sensitivity','N CL',
                              'S sensitivity','S CL','Conservation')
