@@ -102,13 +102,24 @@ server <- function(input, output) {
                         ))
                 },
                 content = function(file) {
-                        src <- normalizePath('report.Rmd')
-                        src_png <- normalizePath('usfs.png')
+                        src       <- normalizePath('report.Rmd')
+                        src_png_a <- normalizePath('usfs.png')
+                        src_png_b <- normalizePath('bothlichens.png')
+
+                        # src_png_b <- normalizePath('bryoria.png')
+                        # src_png_c <- normalizePath('pseudocyphellaria.png')
 
                         owd <- setwd(tempdir())
                         on.exit(setwd(owd))
-                        file.copy(src, 'report.Rmd', overwrite=TRUE)
-                        file.copy(src_png, 'usfs.png', overwrite=TRUE)
+                        file.copy(src, 'report.Rmd',
+                                  overwrite=TRUE)
+                        file.copy(src_png_a, 'usfs.png',
+                                  overwrite=TRUE)
+                        file.copy(src_png_b, 'bothlichens.png',
+                                  overwrite=TRUE)
+                        # file.copy(src_png_c, 'pseudocyphellaria.png',
+                        #           overwrite=TRUE)
+
                         out <- rmarkdown::render(
                                 'report.Rmd',
                                 switch(
