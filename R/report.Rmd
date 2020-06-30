@@ -1,7 +1,9 @@
 ---
 title: \vspace{-1.5cm} Wilderness Air Quality Values \break for `r input$x`
 date: 'Report prepared: `r format(Sys.time(), "%d %B %Y")`'
+toccolor: 'black'
 header-includes:
+- \usepackage{hyperref} \hypersetup{pdfstartview={XYZ null null 1.00}, colorlinks = true, linkcolor = red, urlcolor = red}
 - \usepackage{float} \floatplacement{figure}{H}
 - \usepackage[font=small,skip=0pt]{caption}
 - \usepackage{wrapfig}
@@ -106,8 +108,6 @@ dec <- get_recent_decade(pick = rx())
 Number of surveyed plots:   **`r n`**  
 Field sampling dates: **`r rng[1]` to `r rng[2]`**  
 Most recent ten-year sampling period: **`r dec`**  
-<!-- National rank for **critical loads exceedances**: *xx*^th^ percentile -->
-<!-- National rank for **climate-adjusted lichen air scores**: *xx*^th^ percentile -->
 
 ## Nitrogen snapshot
 
@@ -118,15 +118,15 @@ Most recent ten-year sampling period: **`r dec`**
      x      <- a[which(a$warea==pick),
                  paste0('cmaq_',select,'_3yroll.mean')]
      arrlab <- 'OBSERVED\nCMAQ deposition'
-     if(is.na(x)) { # try lichen airscores if CMAQ is missing
+     if(all(is.na(x))) { # try lichen airscores if CMAQ is missing
           x      <- a[which(a$warea==pick),
                       paste0(select,'_airscore.mean')]
           arrlab <- 'OBSERVED\nlichen airscores'
      } 
-     if(is.na(x)) { # no more tries
+     if(all(is.na(x))) { # no more tries
           x <- 999
      }
-     obs <-  x[length(x)] # take most recent one
+     obs  <- x[length(x)] # take most recent one
      par(mar=c(4,0.3,0.3,0.3), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
      n    <- 100
      xseq <- seq(-0.5, 20.0, len=n)
@@ -153,7 +153,7 @@ Most recent ten-year sampling period: **`r dec`**
           text(x=obs, y=10, arrlab, pos=1, cex=0.7, font=2)
      }
 }
-b <- c(2.5, 6, 9.9, 14) # new (loosely based on 20/50/80)
+b <- c(2.5, 6, 9.9, 14) # loosely based on 20/50/80
 plot_valuebar(pick = rx(), brk=b, select='n',
               xlab=expression(N~deposition~'('*kg~ha^-1~yr^-1*')'))
 ```
@@ -171,6 +171,89 @@ plot_valuebar(pick = rx(), brk=b, select='s',
 
 
 \newpage
+
+
+```{r check_ttest, include=FALSE}
+x   <- d[d$wa==rx(), ]
+u   <- sort(unique(na.omit(x[,'tenyr']))) # get unique time periods
+len <- length(u)
+if(len < 2) {
+     has_ttest <- FALSE
+} else {
+     u <- u[(len-1):(len)]   # take *most recent* two periods
+     x <- x[x$tenyr %in% u,,drop=T]
+     x <- x[order(x$tenyr), ]
+     ### UNPAIRED 2-sample ttest - change in airscores (NOT paired...)
+     t1 <- t.test(n_airscore ~ tenyr, data=x)
+     t3 <- t.test(s_airscore ~ tenyr, data=x)
+     ### descriptive summary table
+     `f` <- function (x, na.rm = TRUE) {
+          if (!is.numeric(x)) return(NULL)
+          m  <- mean(x, na.rm = na.rm)
+          s  <- stats::sd(x, na.rm = na.rm)
+          na <- sum(is.na(x))
+          n  <- length(x) - na
+          se <- s/sqrt(n - 1)
+          ci <- 1.96 * se
+          return(c(mean=round(m,3), ci=round(ci,3), n=n))
+     }
+     tab1<-do.call(data.frame,aggregate(x$n_airscore,list(x$tenyr),f))
+     tab3<-do.call(data.frame,aggregate(x$s_airscore,list(x$tenyr),f))
+     has_ttest <- TRUE
+}
+```
+
+`r if(has_ttest) {paste0('## Significant trends\n\nFrom the decade ', u[1], ' to ', u[2], ', a two-sample _t_-test of lichen airscores revealed ', ifelse(t1$p.value < 0.05,'a ','NO '), 'SIGNIFICANT trend in N deposition, and ', ifelse(t3$p.value < 0.05,'a ','NO '), 'SIGNIFICANT trend in S deposition. ', 'See figure for test results.')}`
+
+```{r plot_ttest, eval=has_ttest, echo=FALSE, fig.width=6.5, fig.height=3.5, fig.cap='Results of _t_-tests evaluating air-quality trends over time.'}
+### PLOT
+`plot_ci` <- function (tab, mod, ylab, ...) {
+  nm   <- tab$Group.1
+  y    <- tab$x.mean
+  yci  <- tab$x.ci
+  x    <- 1:2
+  ylm  <- c(0, # min(c(y, y - yci), na.rm=T) - 0.4,
+            max(c(y, y + yci), na.rm=T) + 0.1)
+  if (all(is.infinite(ylm))) return(NULL)
+  if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
+  if (missing(ylab)) {
+    ylb <- expression(Air~score~(kg~ha^'-1'~y^'-1'))
+  } else {
+    ylb <- ylab
+  }
+  plot(x=x, y=tab[,2], pch=16, ylab=ylb, xlab='', xaxt='n',
+       xlim=c(0.4,2.6), ylim=ylm, ...)
+  xlb <- paste0(tab$Group.1,'\n','n = ',tab$x.n)
+  axis(1, at=x, labels=xlb, tick=F, line=1, cex.axis=0.9)
+  w <- 0.05
+  segments(x0=x,   x1=x,   y0=y-yci, y1=y+yci, lwd=1.75)
+  segments(x0=x-w, x1=x+w, y0=y+yci, y1=y+yci, lwd=1.75)
+  segments(x0=x-w, x1=x+w, y0=y-yci, y1=y-yci, lwd=1.75)
+  `add_text` <- function (x, y, labels, ...) {
+    text(x = graphics::grconvertX(x, from = "npc", to = "user"),
+         y = graphics::grconvertY(y, from = "npc", to = "user"),
+         labels = labels, adj = 0, ...)
+  }
+  add_text(0.05,0.19,
+           lab=paste0('t = ', formatC(round(mod$statistic,1),digits=3)),
+           cex=0.8)
+  add_text(0.05,0.12,
+           lab=ifelse(mod$p.value < 0.01, 'p < 0.01',
+                      paste0('p = ',formatC(round(mod$p.value,2),digits=4))),
+           cex=0.8)
+  add_text(0.05,0.05,
+           lab=paste0('Est. diff. = ',
+                      formatC(round(diff(mod$estimate),1),digits=2)),
+           cex=0.8)
+}
+set_par(2)
+par(mgp=c(1.3,0.4,0))
+plot_ci(tab1, t1, ylab=expression(N~air~score~(kg~N~ha^'-1'~y^'-1')))
+plot_ci(tab3, t3, ylab=expression(S~air~score~(kg~S~ha^'-1'~y^'-1')))
+rm(plot_ci, len, x, u, f, t1, t3, tab1, tab3)
+```
+
+`r if(has_ttest) {"Power analysis: a _t_-test would require _n_ = 17 plots per time interval to detect a change of 1 kg ha^-1^ y^-1^ with 80\\% probability.\\newpage"}`
 
 
 ## Area map
@@ -429,7 +512,6 @@ get_tab(pick = rx(),
 ## Motivation
 
 Each Wilderness area managed by the USDA Forest Service must report annually on progress toward “wildernesses meeting baseline performance for preserving wilderness character”, otherwise known as Wilderness Stewardship Performance (WSP).  Among other elements, **_Wilderness Air Quality Values_** (**_WAQVs_**) are a marker of natural quality of Wilderness character (WSP Guidebook 2020).  This report streamlines annual WSP reporting for WAQVs from lichen-based Critical Loads (CLs).
-<!-- This report enables nationally consistent, accurate, and timely annual reporting for WAQVs from lichen-based Critical Loads (CLs). -->
 
 ## Sensitive receptors
 
@@ -445,7 +527,7 @@ Individual species' sensitivities are the value of N or S deposition (kg ha^-1^ 
 
 ### Indicator: Critical loads exceedances
 
-A critical load (CL) is the air pollutant deposition rate expected to result in harmful ecosystem changes.  Exceedance is the degree to which locally observed deposition goes beyond an established CL.  Lichen-based CLs were established in prior work (Geiser et al. 2019).  Specifically, lichen-based CLs are the deposition rates at which we expect changes in 1) total species richness, 2) sensitive species richness, 3) forage lichen abundance, 4) cyanolichen abundance, and 5) community compositions (see **[next section](#critical-loads-we-used)**).
+A critical load (CL) is the air pollutant deposition rate expected to result in harmful ecosystem changes.  Exceedance is the degree to which locally observed deposition goes beyond an established CL.  Lichen-based CLs were established in prior work (Geiser et al. 2019).  Specifically, lichen-based CLs are the deposition rates at which we expect changes in 1) total species richness, 2) sensitive species richness, 3) forage lichen abundance, 4) cyanolichen abundance, and 5) community compositions (see **[critical loads we used](#critical-loads-we-used)**).
 
 ## Conservation status
 
@@ -485,13 +567,17 @@ See the article:
 
 ## Why monitor lichens? Ecological functions
 
-Lichens are commonly divided into three "functional groups" based on ecological functions: matrix lichens, forage lichens, and cyanolichens.
+\begin{wrapfigure}{r}{11.0cm}
+\includegraphics{bothlichens.png}
+\end{wrapfigure}
 
-Forage lichens (including "old-man's beard" and "witches' hair" lichens) provide food, nesting materials and suitable habitat for many animals (from insects to amphibians to small mammals).   Large ungulates like deer, elk or caribou may depend on forage lichens to eat during lean winter months.  Loss of these pollution-sensitive lichens might have implications for the wildlife that depend on them.
+Lichens are commonly divided into "functional groups" based on ecological functions: three common groups are forage lichens, cyanolichens and matrix lichens.
 
-Cyanolichens (including "lungwort" lichens) contain cyanobacterial partners that convert nitrogen from the air into a form which forest vegetation can absorb -- when cyanolichens fall to the forest floor and release this nitrogen, they serve as "forest fertilizer"! Despite this capacity, cyanolichens are among the most intolerant of poor air quality, and so their presence indicates clean air.
+__*Forage lichens*__ (including "old-man's beard" and "witches' hair" lichens) provide food, nesting materials and suitable habitat for many animals (from insects to amphibians to small mammals).   Large ungulates like deer, elk or caribou may depend on forage lichens to eat during lean winter months.  Loss of these pollution-sensitive lichens might have implications for the wildlife that depend on them.
 
-Matrix lichens are any that are not forage or cyanolichens.  They are often more pollution-tolerant than those two groups, and perform an array of ecosystem functions. These range from...
+__*Cyanolichens*__ (including "lungwort" lichens) contain cyanobacterial partners that convert nitrogen from the air into a form which forest vegetation can absorb -- when cyanolichens fall to the forest floor and release this nitrogen, they serve as "forest fertilizer"! Despite this capacity, cyanolichens are among the most intolerant of poor air quality, and so their presence indicates clean air.
+
+__*Matrix lichens*__ are any that are not forage or cyanolichens.  They are often more pollution-tolerant than those two groups, and perform an array of ecosystem functions.  These functions include rainfall interception, water cycle buffering, animal habitat, and bioindication of forest health.
 
 
 \newpage
@@ -505,12 +591,8 @@ Matrix lichens are any that are not forage or cyanolichens.  They are often more
 `get_richness` <- function (pick, ...) {
   NROW(s[[which(names(s) == pick)]])
 }
-# `get_n_plots` <- function (pick, ...) {
-#   NROW(d[which(d$wa==pick),])
-# }
-spp_obs    <- get_richness(pick = rx())
-# plot_obs   <- n
-spp_exp    <- 4.01 + 25.81*log(n) # log-linear eqn
+spp_obs <- get_richness(pick = rx())
+spp_exp <- 4.01 + 25.81*log(n) # log-linear eqn
 ```
 
 Number of surveyed plots:   **`r n`**  
@@ -559,20 +641,23 @@ Number of species with 'at risk' conservation status: **`r x$atrisk`**
 Percentage of rated species with 'sensitive (oligotroph)' N tolerance: **`r x$nsens`\%**  
 Percentage of rated species with 'sensitive' S tolerance: **`r x$ssens`\%**  
 
+\newpage
+
 ## Species list
 
-**List of all macrolichens observed in plots at `r input$x` over the years `r rng[1]` to `r rng[2]`**.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  _Functional groups_ ('Fxl grp'): include cyanolichens ('cyano') capable of nitrogen-fixation, and forage lichens ('forage') important for wildlife.  _Sensitivity_: 'N sensitivity' for each species ranges from low to high tolerance (oligo-, meso-, eutroph), as does 'S sensitivity' (sensitive, intermediate, tolerant).  _Critical loads_ ('CL') are deposition levels resulting in >20\% decrease in occurrence.  _Conservation_: conservation status is from NatureServe (https://www.natureserve.org/), which assigns each species both a global (G) and state (S) rank on a scale of 1 to 5 (1=Critically imperiled; 2=Imperiled; 3=Vulnerable; 4=Apparently secure; 5=Secure).  
+**List of all macrolichens observed in plots at `r input$x` over the years `r rng[1]` to `r rng[2]`**.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  _Functional groups_ ('Fxl grp'): include cyanolichens ('cyano') and forage lichens ('forage')(see **[descriptions](#why-monitor-lichens-ecological-functions)**).  _Sensitivity_: 'N sensitivity' for each species ranges from low to high tolerance (oligo-, meso-, eutroph), as does 'S sensitivity' (sensitive, intermediate, tolerant).  _Critical loads_ ('CL') are deposition levels resulting in >20\% decrease in occurrence.  _Conservation_: is from NatureServe (https://www.natureserve.org/), which assigns each species both a global (G) and state (S) rank on a scale of 1 to 5 (1=Critically imperiled; 2=Imperiled; 3=Vulnerable; 4=Apparently secure; 5=Secure). 
+
 
 ```{r species_list}
 `get_tab_species` <- function (pick, ...) {
   tab <- s[which(names(s) == pick)]
   knitr::kable(x         = tab,
                format    = 'markdown',  ### format = 'pandoc',
-               row.names = F,
-               longtable = T,
-               booktabs  = T,
+               row.names = FALSE,
+               longtable = TRUE,
+               booktabs  = TRUE,
                caption   = 'Macrolichen species list.',
-               escape    = F,
+               escape    = FALSE,
                col.names = c('Species','Fxl grp','N sensitivity','N CL',
                              'S sensitivity','S CL','Conservation')
   )
@@ -580,5 +665,4 @@ Percentage of rated species with 'sensitive' S tolerance: **`r x$ssens`\%**
 get_tab_species(pick = rx())
 ```
 
-End of report.
 <!-- END -->
