@@ -98,6 +98,35 @@ Washington, DC 20250
 
 \newpage
 
+<!-- # Overview -->
+
+<!-- __*Evaluating status and trends in air quality and terrestrial condition using lichen WAQVs*__ -->
+
+<!-- This report uses the __*Lichen Wilderness Air Quality Value (WAQV)*__ to indicate status and trends in terrestrial ecosystem condition in `r input$x`.  This WAQV meets Wilderness Stewardship Performance reporting requirements for the Air Element.  -->
+
+<!-- Fertilizing and acidifying air pollutants alter soil and water chemistry, which can change the diversity and composition of microbes, invertebrates, vegetation and wildlife. Together with ozone and air toxics (not reported here) they are the air pollutants most likely to harm terrestrial and aquatic wilderness ecosystems.  -->
+
+<!-- Because most harm occurs as pollutants are deposited to the environment, air pollution levels and ecosystem responses typically use units of deposition, i.e., kilograms of __*total nitrogen*__ (fertilizing pollution) or __*total sulfur*__ (acidifying pollution) per hectare per year.  The short way to denote these units is kg N ha^-1^ y^-1^ or kg S ha^-1^ y^-1^. -->
+
+<!-- Ecosystem responses to air pollution can be quantified by single-species measures (e.g., growth or mortality), or by community measures (e.g., richness or community composition).  -->
+
+<!-- A __*critical load (CL)*__ is the amount of pollutant deposition below which no ecosystem harm occurs. CLs exist for soils, trees, herbs, and lichens. As air pollution surpasses a given CL, both the amount of __*exceedance*__ (kg ha^-1^ y^-1^) and the __*risk*__ of anticipated harm to ecosystems increase. As air quality improves, we expect reductions in CL exceedances and improvements in ecosystem responses. Thus, continued monitoring is a key tool for quantifying how air quality relates to ecosystem improvement, maintenance, or decline. -->
+
+<!-- Epiphytic macrolichens (large lichens growing on trees and shrubs) are a preferred indicator of air pollution. USFS Forest Inventory \& Analysis protocols have been used to survey lichens for air quality and climate status and trends across most of the forested United States. Because lichens rely on air for their nutrition and lack specialized tissues to exclude pollution, the number and type of species present reflects air quality conditions. Unlike the buffering effect of soils which protects rooted plants, lichens respond directly to the amount of pollution in the air. Thus lichen CLs are the proverbial canary in the coal mine. -->
+
+<!-- Lichens are also an integral part of forested ecosystems. They are composite organisms of a fungus and a green alga or a cyanobacterium or both. The fungus provides nutrients from the air and a protective environment, the algae photosynthesize, and the cyanobacteria fix nitrogen from the air and will also photosynthesize if no green alga is present. North America possesses >5400 species. Cyanobacterial lichens (__*cyanolichens*__) are highly preferred by invertebrates for their moderated moisture and higher nutrient content compared to green algal lichens, and cyanolichens contribute hugely to forest nutrient cycling. __*Forage lichens*__ are beard-like, shrubby species prized by ungulates, rodents, and birds for food and nesting materials. __*Matrix lichens*__ are all other leaf-like and shrubby species primarily used by invertebrates as habitat and birds for nesting. -->
+
+<!-- This report summarizes status and trends in air quality and its effects in 10-year increments including: -->
+<!-- * atmospheric deposition of nitrogen and of sulfur (CMAQ v5.02, lichen community air scores) -->
+<!-- * exceedances of lichen N and S critical loads -->
+<!-- * risks to lichen biodiversity, sensitive lichens, forage lichens, cyanolichens, and individual species.  -->
+<!-- <!-- Status is provided as a concern level: none, minimal, moderate, or high; trends as: no change, increasing, or decreasing.  --> -->
+<!-- See **[Further information](#further-information)** section for additional documentation of these methods. -->
+
+
+<!-- \newpage -->
+
+
 # Summary for `r input$x`
 
 ```{r years_and_plot_count}
@@ -202,25 +231,49 @@ if(len < 2) {
      } else {
           fmla_s <- NULL
      }
-     ### UNPAIRED 2-sample ttest - change in airscores (NOT paired...)
-     t1 <- tryCatch(t.test(fmla_n,data=x),error=function(e)return(NA))
-     t3 <- tryCatch(t.test(fmla_s,data=x),error=function(e)return(NA))
-     ### descriptive summary table
-     `f` <- function (x, na.rm = TRUE) {
-          if (!is.numeric(x)) return(NULL)
-          m  <- mean(x, na.rm = na.rm)
-          s  <- stats::sd(x, na.rm = na.rm)
-          na <- sum(is.na(x))
-          n  <- length(x) - na
-          se <- s/sqrt(n - 1)
-          ci <- 1.96 * se
-          return(c(mean=round(m,3), ci=round(ci,3), n=n))
+     ### ensure minimum sample size
+     `get_n_per_grp` <- function (x, na.rm = TRUE) {
+          n  <- length(x) - sum(is.na(x))
+          return(c(n=n))
      }
-     tab1 <- tryCatch(do.call(data.frame, aggregate(fmla_n, data=x, f)),
-                      error=function(e)return(NA))
-     tab3 <- tryCatch(do.call(data.frame, aggregate(fmla_s, data=x, f)),
-                      error=function(e)return(NA))
-     has_ttest <- TRUE
+     n_n <- tryCatch(aggregate(fmla_n, data=x, get_n_per_grp),
+                     error=function(e) return(NULL))
+     n_s <- tryCatch(aggregate(fmla_s, data=x, get_n_per_grp),
+                     error=function(e) return(NULL))
+     ### control logic, if both are NULL or too-small sample-size, 
+     ###     then dont do the ttests
+     if ((is.null(fmla_n) & is.null(fmla_s)) | 
+         (any(n_n[,2] < 2) & any(n_s[,2] < 2))) {
+          has_ttest <- FALSE
+     } else {
+          ### UNPAIRED 2-sample ttest (plots NOT paired...)
+          t1 <- tryCatch(t.test(fmla_n,data=x),
+                         error=function(e)return(NULL))
+          t3 <- tryCatch(t.test(fmla_s,data=x),
+                         error=function(e)return(NULL))
+          ### descriptive summary table
+          `f` <- function (x, na.rm = TRUE) {
+               if (!is.numeric(x)) return(NULL)
+               m  <- mean(x, na.rm = na.rm)
+               s  <- stats::sd(x, na.rm = na.rm)
+               na <- sum(is.na(x))
+               n  <- length(x) - na
+               se <- s/sqrt(n - 1)
+               ci <- 1.96 * se
+               return(c(mean=round(m,3), ci=round(ci,3), n=n))
+          }
+          tab1 <- tryCatch(do.call(data.frame, 
+                                   aggregate(fmla_n, data=x, f)),
+                           error=function(e)return(NULL))
+          tab3 <- tryCatch(do.call(data.frame, 
+                                   aggregate(fmla_s, data=x, f)),
+                           error=function(e)return(NULL))
+          has_ttest <- TRUE
+     }
+     ### if ttests failed then cancel ttests
+     if (is.null(t1) & is.null(t3)) {
+          has_ttest <- FALSE
+     }
 }
 ```
 
@@ -288,7 +341,7 @@ set_par(2)
 par(mgp=c(1.3,0.4,0))
 try(plot_ci(tab1, t1, ylab=ylb_n), silent=TRUE)
 try(plot_ci(tab3, t3, ylab=ylb_s), silent=TRUE)
-rm(plot_ci, len, x, u, f, t1, t3, tab1, tab3, ylb_n, ylb_s, fmla_n, fmla_s)
+rm(get_n_per_grp, plot_ci, len, x, u, f, t1, t3, tab1, tab3, ylb_n, ylb_s, fmla_n, fmla_s)
 ```
 
 `r if(has_ttest) {"Power analysis: a _t_-test would require _n_ = 17 plots per time interval to detect a change of 1 kg ha^-1^ y^-1^ with 80\\% probability.\\newpage"}`

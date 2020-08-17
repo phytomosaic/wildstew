@@ -18,6 +18,7 @@ require(rmarkdown)
 require(knitr)
 require(rgdal)
 require(raster)
+require(rgeos)
 require(viridis)
 load('d.rda', verbose=T)  # data in same directory as app.R
 load('a.rda', verbose=T)  # data in same directory as app.R
