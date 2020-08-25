@@ -28,6 +28,7 @@ load('s.rda', verbose=T)  # data in same directory as app.R
 w       <- readOGR(dsn='.', 'wilderness_2019') # shapefiles
 dem     <- raster('dem_usa_unclipped.tif') # DEM raster
 choices <- sort(unique(as.character(a$warea)))
+# has_ttest <- FALSE
 
 ###################################################################
 ui <- fluidPage(

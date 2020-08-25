@@ -5,8 +5,8 @@ account: ecol
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2180531
-bundleId: 3336267
+bundleId: 3556967
 url: https://ecol.shinyapps.io/wildstew/
-when: 1593554471.50051
+when: 1598383578.22925
 asMultiple: FALSE
 asStatic: FALSE
