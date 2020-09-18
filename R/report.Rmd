@@ -208,72 +208,73 @@ x   <- d[d$wa==rx(), ]
 u   <- sort(unique(na.omit(x[,'tenyr']))) # get unique time periods
 len <- length(u)
 if(len < 2) {
-     has_ttest <- FALSE
+  has_ttest <- FALSE
 } else {
-     u <- u[(len-1):(len)]   # take *most recent* two periods
-     x <- droplevels(x[x$tenyr %in% u,,drop=T])
-     x <- x[order(x$tenyr), ]
-     ### either tenyr have *ALL* NA? (ttest still works if *SOME* NA)
-     `f` <- function(k) all(is.na(k))
-     ### control logic to select CMAQ > AIRSCORE > NONE (nitrogen)
-     if (!any(tapply(x$cmaq_n_3yroll, list(x$tenyr), f))) {
-          fmla_n <- as.formula(cmaq_n_3yroll ~ tenyr)
-     } else if (!any(tapply(x$n_airscore, list(x$tenyr), f))) {
-          fmla_n <- as.formula(n_airscore ~ tenyr)
-     } else {
-          fmla_n <- NULL
-     }
-     ### control logic to select CMAQ > AIRSCORE > NONE (sulfur)
-     if (!any(tapply(x$cmaq_s_3yroll, list(x$tenyr), f))) {
-          fmla_s <- as.formula(cmaq_s_3yroll ~ tenyr)
-     } else if (!any(tapply(x$s_airscore, list(x$tenyr), f))) {
-          fmla_s <- as.formula(s_airscore ~ tenyr)
-     } else {
-          fmla_s <- NULL
-     }
-     ### ensure minimum sample size
-     `get_n_per_grp` <- function (x, na.rm = TRUE) {
-          n  <- length(x) - sum(is.na(x))
-          return(c(n=n))
-     }
-     n_n <- tryCatch(aggregate(fmla_n, data=x, get_n_per_grp),
-                     error=function(e) return(NULL))
-     n_s <- tryCatch(aggregate(fmla_s, data=x, get_n_per_grp),
-                     error=function(e) return(NULL))
-     ### control logic, if both are NULL or too-small sample-size, 
-     ###     then dont do the ttests
-     if ((is.null(fmla_n) & is.null(fmla_s)) | 
-         (any(n_n[,2] < 2) & any(n_s[,2] < 2))) {
-          has_ttest <- FALSE
-     } else {
-          ### UNPAIRED 2-sample ttest (plots NOT paired...)
-          t1 <- tryCatch(t.test(fmla_n,data=x),
-                         error=function(e)return(NULL))
-          t3 <- tryCatch(t.test(fmla_s,data=x),
-                         error=function(e)return(NULL))
-          ### descriptive summary table
-          `f` <- function (x, na.rm = TRUE) {
-               if (!is.numeric(x)) return(NULL)
-               m  <- mean(x, na.rm = na.rm)
-               s  <- stats::sd(x, na.rm = na.rm)
-               na <- sum(is.na(x))
-               n  <- length(x) - na
-               se <- s/sqrt(n - 1)
-               ci <- 1.96 * se
-               return(c(mean=round(m,3), ci=round(ci,3), n=n))
-          }
-          tab1 <- tryCatch(do.call(data.frame, 
-                                   aggregate(fmla_n, data=x, f)),
-                           error=function(e)return(NULL))
-          tab3 <- tryCatch(do.call(data.frame, 
-                                   aggregate(fmla_s, data=x, f)),
-                           error=function(e)return(NULL))
-          has_ttest <- TRUE
-     }
-     ### if ttests failed then cancel ttests
-     if (is.null(t1) & is.null(t3)) {
-          has_ttest <- FALSE
-     }
+  u <- u[(len-1):(len)]   # take *most recent* two periods
+  x <- droplevels(x[x$tenyr %in% u,,drop=T])
+  x <- x[order(x$tenyr), ]
+  ### either tenyr have *ALL* NA? (ttest still works if *SOME* NA)
+  `f` <- function(k) all(is.na(k))
+  ### control logic to select CMAQ > AIRSCORE > NONE (nitrogen)
+  if (!any(tapply(x$cmaq_n_3yroll, list(x$tenyr), f))) {
+    fmla_n <- as.formula(cmaq_n_3yroll ~ tenyr)
+  } else if (!any(tapply(x$n_airscore, list(x$tenyr), f))) {
+    fmla_n <- as.formula(n_airscore ~ tenyr)
+  } else {
+    fmla_n <- NULL
+  }
+  ### control logic to select CMAQ > AIRSCORE > NONE (sulfur)
+  if (!any(tapply(x$cmaq_s_3yroll, list(x$tenyr), f))) {
+    fmla_s <- as.formula(cmaq_s_3yroll ~ tenyr)
+  } else if (!any(tapply(x$s_airscore, list(x$tenyr), f))) {
+    fmla_s <- as.formula(s_airscore ~ tenyr)
+  } else {
+    fmla_s <- NULL
+  }
+  ### ensure minimum sample size
+  `get_n_per_grp` <- function (x, na.rm = TRUE) {
+    n  <- length(x) - sum(is.na(x))
+    return(c(n=n))
+  }
+  n_n <- tryCatch(aggregate(fmla_n, data=x, get_n_per_grp),
+                  error=function(e) return(NULL))
+  n_s <- tryCatch(aggregate(fmla_s, data=x, get_n_per_grp),
+                  error=function(e) return(NULL))
+  ### control logic, if both are NULL or too-small sample-size, 
+  ###     then dont do the ttests
+  if ((is.null(fmla_n) & is.null(fmla_s)) | 
+      (any(n_n[,2] < 2) & any(n_s[,2] < 2))) {
+    has_ttest <- FALSE
+  } else {
+    ### UNPAIRED 2-sample ttest (plots NOT paired...)
+    t1 <- tryCatch(t.test(fmla_n,data=x),
+                   error=function(e)return(NULL))
+    t3 <- tryCatch(t.test(fmla_s,data=x),
+                   error=function(e)return(NULL))
+    ### descriptive summary table
+    `f` <- function (x, na.rm = TRUE) {
+      if (!is.numeric(x)) return(NULL)
+      m  <- mean(x, na.rm = na.rm)
+      s  <- stats::sd(x, na.rm = na.rm)
+      na <- sum(is.na(x))
+      n  <- length(x) - na
+      se <- s/sqrt(n - 1)
+      ci <- 1.96 * se
+      return(c(mean=round(m,3), ci=round(ci,3), n=n))
+    }
+    tab1 <- tryCatch(do.call(data.frame, 
+                             aggregate(fmla_n, data=x, f)),
+                     error=function(e)return(NULL))
+    tab3 <- tryCatch(do.call(data.frame, 
+                             aggregate(fmla_s, data=x, f)),
+                     error=function(e)return(NULL))
+    has_ttest <- TRUE
+    
+    ### if ttests failed then cancel ttests
+    if (is.null(t1) & is.null(t3)) {
+      has_ttest <- FALSE
+    }
+  }
 }
 ```
 
