@@ -120,7 +120,7 @@ Washington, DC 20250
 <!-- * atmospheric deposition of nitrogen and of sulfur (CMAQ v5.02, lichen community air scores) -->
 <!-- * exceedances of lichen N and S critical loads -->
 <!-- * risks to lichen biodiversity, sensitive lichens, forage lichens, cyanolichens, and individual species.  -->
-<!-- <!-- Status is provided as a concern level: none, minimal, moderate, or high; trends as: no change, increasing, or decreasing.  --> -->
+<!-- Status is provided as a concern level: none, minimal, moderate, or high; trends as: no change, increasing, or decreasing.  -->
 <!-- See **[Further information](#further-information)** section for additional documentation of these methods. -->
 
 
