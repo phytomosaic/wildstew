@@ -98,6 +98,90 @@ Washington, DC 20250
 
 \newpage
 
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+
+# Overview
+
+## Motivation
+
+Each Wilderness area managed by the USDA Forest Service must report annually on progress toward “wildernesses meeting baseline performance for preserving wilderness character”, otherwise known as Wilderness Stewardship Performance (WSP).  Among other elements, **_Wilderness Air Quality Values_** (**_WAQVs_**) are a marker of natural quality of Wilderness character (WSP Guidebook 2020).  This report streamlines annual WSP reporting for WAQVs from lichen-based Critical Loads (CLs).
+
+## Sensitive receptors
+
+WAQVs are supported by monitoring changes in “sensitive receptors” like epiphytic macrolichens.  Lichens are impacted by air pollutants and therefore indicate changing conditions.  Workers long ago established links between lichen tissue content and the atmospheric deposition of pollutants like oxidized nitrogen (NO$_x$), reduced nitrogen (NH$_x$) and oxidized sulfur (SO$_x$).  Each species also has a unique and individualistic pollution tolerance, so observing collective responses is far more robust than any single species alone.
+
+## Sensitive receptor indicators
+
+For WSP reporting of air quality, “sensitive receptor indicators” can be estimated by the presence and abundance of lichen species.  Nationally-consistent FHM/FIA surveys of lichen communities let us score and classify species by their relative pollution tolerance, and to calculate community metrics across all species at a site.  Community metrics are more robust than tracking single species because the absence of a single species offers only circumstantial evidence of air quality (what if the species simply wasn't able to disperse to or tolerate microclimate at that site?).  The joint absence of multiple pollution-intolerant species provides much stronger evidence of air-quality impacts.
+
+### Indicator: Air scores
+
+Individual species' sensitivities are the value of N or S deposition (kg ha^-1^ y^-1^) at which the species was most frequently detected.  Air scores for each site are the community-weighted mean of species' sensitivities, for all species present (kg ha^-1^ y^-1^).  Therefore, site air scores represent the collective pollution tolerance of co-occurring species: "clean" sites have fairly low air scores driven by pollution-intolerant species, while "polluted" sites have higher air scores driven by pollution-tolerant ones.  Air scores are reported as both raw scores (without regard to climate) and as climate-adjusted scores (which permit nationwide comparison).
+
+### Indicator: Critical loads exceedances
+
+A critical load (CL) is the air pollutant deposition rate expected to result in harmful ecosystem changes.  Exceedance is the degree to which locally observed deposition goes beyond an established CL.  Lichen-based CLs were established in prior work (Geiser et al. 2019).  Specifically, lichen-based CLs are the deposition rates at which we expect changes in 1) total species richness, 2) sensitive species richness, 3) forage lichen abundance, 4) cyanolichen abundance, and 5) community compositions (see **[critical loads we used](#critical-loads-we-used)**).
+
+## Conservation status
+
+Conservation rankings follow NatureServe (https://www.natureserve.org/).  Species considered 'at risk' here are those ranked by NatureServe as Critically Imperiled, Imperiled, or Vulnerable, and/or those ranked by COSEWIC as Endangered, Special Concern, or Threatened.  
+
+## Critical loads we used
+
+We used critical loads from Table 3 in Geiser et al. (2019).  These critical loads are invariant to geography and so apply nationwide. Critical loads in this table are deposition levels resulting in $\geq20\%$ decrease in the richness or abundance of the given lichen metric. 
+
+\  
+
+```{r critical_loads_tab}
+tab <- data.frame(Metric = c('Species richness',
+                             'Sensitive species richness',
+                             'Forage lichen abundance',
+                             'Cyanolichen abundance',
+                             'Comm composition shifts'),
+                  Ndep = c(3.5, 3.1, 1.9, 1.3, 1.5),
+                  Sdep = c(6.0, 2.5, 2.6, 2.3, 2.7))
+knitr::kable(tab, format='pandoc', row.names = F, longtable = T,
+             booktabs  = T,
+             caption   = 'Critical loads used in this report (kg ha^-1^ y^-1^).',
+             escape    = F,
+             col.names = c('Lichen metric', 'N deposition', 'S deposition'))
+```
+
+See the article:  
+
+>Geiser, L., P. Nelson, S. Jovan, H. Root, and C. Clark. 2019. Assessing ecological risks from atmospheric deposition of nitrogen and sulfur to US forests using epiphytic macrolichens. _Diversity_ 11 (87):1-29. [doi:10.3390/d11060087](https://doi.org/10.3390/d11060087){target="_blank"}  
+
+\  
+
+## Why monitor lichens? Ecological functions
+
+\begin{wrapfigure}{r}{5.0cm}
+\includegraphics{bothlichens.png}
+\end{wrapfigure}
+
+Lichens are commonly divided into "functional groups" based on ecological functions: three common groups are forage lichens, cyanolichens and matrix lichens.
+
+__*Forage lichens*__ (including "old-man's beard" and "witches' hair" lichens) provide food, nesting materials and suitable habitat for many animals (from insects to amphibians to small mammals).   Large ungulates like deer, elk or caribou may depend on forage lichens to eat during lean winter months.  Loss of these pollution-sensitive lichens might have implications for the wildlife that depend on them.
+
+__*Cyanolichens*__ (including "lungwort" lichens) contain cyanobacterial partners that convert nitrogen from the air into a form which forest vegetation can absorb -- when cyanolichens fall to the forest floor and release this nitrogen, they serve as "forest fertilizer"!  Cyanolichens are among the most intolerant of poor air quality, so their absence may indicate deteriorating conditions.
+
+__*Matrix lichens*__ are any not included as forage or cyanolichens.  They are often more pollution-tolerant than those two groups, and perform an array of ecosystem functions.  These functions include rainfall interception, water cycle buffering, animal habitat, and bioindication of forest health.
+
+Paying attention to changes in lichen communities is informative -- losses of lichen functional groups can indicate declines in the ecosystem functions that they provide.
+
+
+\newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+
 <!-- # Overview -->
 
 <!-- __*Evaluating status and trends in air quality and terrestrial condition using lichen WAQVs*__ -->
@@ -125,6 +209,12 @@ Washington, DC 20250
 
 
 <!-- \newpage -->
+
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
 
 
 # Summary for `r input$x`
@@ -201,6 +291,9 @@ plot_valuebar(pick = rx(), brk=b, select='s',
 
 
 \newpage
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
 
 
 ```{r check_ttest, include=FALSE}
@@ -347,6 +440,9 @@ rm(get_n_per_grp, plot_ci, len, x, u, f, t1, t3, tab1, tab3, ylb_n, ylb_s, fmla_
 
 `r if(has_ttest) {"Power analysis: a _t_-test would require _n_ = 17 plots per time interval to detect a change of 1 kg ha^-1^ y^-1^ with 80\\% probability.\\newpage"}`
 
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
 
 ## Area map
 
@@ -488,6 +584,10 @@ try_map()
 
 \newpage
 
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
 
 # Site scores
 
@@ -531,6 +631,10 @@ get_tab(pick = rx(),
 
 
 \newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
 
 
 # Critical loads exceedances
@@ -598,78 +702,9 @@ get_tab(pick = rx(),
 
 \newpage
 
-
-# Further information
-
-## Motivation
-
-Each Wilderness area managed by the USDA Forest Service must report annually on progress toward “wildernesses meeting baseline performance for preserving wilderness character”, otherwise known as Wilderness Stewardship Performance (WSP).  Among other elements, **_Wilderness Air Quality Values_** (**_WAQVs_**) are a marker of natural quality of Wilderness character (WSP Guidebook 2020).  This report streamlines annual WSP reporting for WAQVs from lichen-based Critical Loads (CLs).
-
-## Sensitive receptors
-
-WAQVs are supported by monitoring changes in “sensitive receptors” like epiphytic macrolichens.  Lichens are impacted by air pollutants and therefore indicate changing conditions.  Workers long ago established links between lichen tissue content and the atmospheric deposition of pollutants like oxidized nitrogen (NO$_x$), reduced nitrogen (NH$_x$) and oxidized sulfur (SO$_x$).  Each species also has a unique and individualistic pollution tolerance, so observing collective responses is far more robust than any single species alone.
-
-## Sensitive receptor indicators
-
-For WSP reporting of air quality, “sensitive receptor indicators” can be estimated by the presence and abundance of lichen species.  Nationally-consistent FHM/FIA surveys of lichen communities let us score and classify species by their relative pollution tolerance, and to calculate community metrics across all species at a site.  Community metrics are more robust than tracking single species because the absence of a single species offers only circumstantial evidence of air quality (what if the species simply wasn't able to disperse to or tolerate microclimate at that site?).  The joint absence of multiple pollution-intolerant species provides much stronger evidence of air-quality impacts.
-
-### Indicator: Air scores
-
-Individual species' sensitivities are the value of N or S deposition (kg ha^-1^ y^-1^) at which the species was most frequently detected.  Air scores for each site are the community-weighted mean of species' sensitivities, for all species present (kg ha^-1^ y^-1^).  Therefore, site air scores represent the collective pollution tolerance of co-occurring species: "clean" sites have fairly low air scores driven by pollution-intolerant species, while "polluted" sites have higher air scores driven by pollution-tolerant ones.  Air scores are reported as both raw scores (without regard to climate) and as climate-adjusted scores (which permit nationwide comparison).
-
-### Indicator: Critical loads exceedances
-
-A critical load (CL) is the air pollutant deposition rate expected to result in harmful ecosystem changes.  Exceedance is the degree to which locally observed deposition goes beyond an established CL.  Lichen-based CLs were established in prior work (Geiser et al. 2019).  Specifically, lichen-based CLs are the deposition rates at which we expect changes in 1) total species richness, 2) sensitive species richness, 3) forage lichen abundance, 4) cyanolichen abundance, and 5) community compositions (see **[critical loads we used](#critical-loads-we-used)**).
-
-## Conservation status
-
-Conservation rankings follow NatureServe (https://www.natureserve.org/).  Species considered 'at risk' here are those ranked by NatureServe as Critically Imperiled, Imperiled, or Vulnerable, and/or those ranked by COSEWIC as Endangered, Special Concern, or Threatened.  
-
-## Critical loads we used
-
-We used critical loads from Table 3 in Geiser et al. (2019).  These critical loads are invariant to geography and so apply nationwide. Critical loads in this table are deposition levels resulting in $\geq20\%$ decrease in the richness or abundance of the given lichen metric. 
-
-\  
-
-```{r critical_loads_tab}
-tab <- data.frame(Metric = c('Species richness',
-                             'Sensitive species richness',
-                             'Forage lichen abundance',
-                             'Cyanolichen abundance',
-                             'Comm composition shifts'),
-                  Ndep = c(3.5, 3.1, 1.9, 1.3, 1.5),
-                  Sdep = c(6.0, 2.5, 2.6, 2.3, 2.7))
-knitr::kable(tab, format='pandoc', row.names = F, longtable = T,
-             booktabs  = T,
-             caption   = 'Critical loads used in this report (kg ha^-1^ y^-1^).',
-             escape    = F,
-             col.names = c('Lichen metric', 'N deposition', 'S deposition'))
-```
-
-See the article:  
-
->Geiser, L., P. Nelson, S. Jovan, H. Root, and C. Clark. 2019. Assessing ecological risks from atmospheric deposition of nitrogen and sulfur to US forests using epiphytic macrolichens. _Diversity_ 11 (87):1-29. [doi:10.3390/d11060087](https://doi.org/10.3390/d11060087){target="_blank"}  
-
-\  
-
-## Why monitor lichens? Ecological functions
-
-\begin{wrapfigure}{r}{5.0cm}
-\includegraphics{bothlichens.png}
-\end{wrapfigure}
-
-Lichens are commonly divided into "functional groups" based on ecological functions: three common groups are forage lichens, cyanolichens and matrix lichens.
-
-__*Forage lichens*__ (including "old-man's beard" and "witches' hair" lichens) provide food, nesting materials and suitable habitat for many animals (from insects to amphibians to small mammals).   Large ungulates like deer, elk or caribou may depend on forage lichens to eat during lean winter months.  Loss of these pollution-sensitive lichens might have implications for the wildlife that depend on them.
-
-__*Cyanolichens*__ (including "lungwort" lichens) contain cyanobacterial partners that convert nitrogen from the air into a form which forest vegetation can absorb -- when cyanolichens fall to the forest floor and release this nitrogen, they serve as "forest fertilizer"!  Cyanolichens are among the most intolerant of poor air quality, so their absence may indicate deteriorating conditions.
-
-__*Matrix lichens*__ are any not included as forage or cyanolichens.  They are often more pollution-tolerant than those two groups, and perform an array of ecosystem functions.  These functions include rainfall interception, water cycle buffering, animal habitat, and bioindication of forest health.
-
-Paying attention to changes in lichen communities is informative -- losses of lichen functional groups can indicate declines in the ecosystem functions that they provide.
-
-
-\newpage
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
 
 
 # Lichen species observed
