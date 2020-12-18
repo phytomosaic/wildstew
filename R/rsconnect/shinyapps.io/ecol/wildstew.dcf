@@ -5,8 +5,9 @@ account: ecol
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2180531
-bundleId: 3645148
+bundleId: 4007276
 url: https://ecol.shinyapps.io/wildstew/
-when: 1600463804.21444
+when: 1608324463.51698
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: app_catch_bigmaps.R|NOSAVE_diagnostics.R|report_catch_bigmaps.Rmd
