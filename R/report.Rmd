@@ -1,5 +1,5 @@
 ---
-title: \vspace{-1.5cm} Wilderness Air Quality Values \break for `r input$x`
+title: \vspace{-1.5cm}{Wilderness Air Quality Values \break for `r input$x`}
 date: 'Report prepared: `r format(Sys.time(), "%d %B %Y")`'
 toccolor: 'black'
 header-includes:
@@ -284,7 +284,7 @@ plot_valuebar(pick = rx(), brk=b, select='n',
 
 ```{r plot_valuebar_S, warning=FALSE, message=FALSE, fig.height=2.25, fig.width=6.0, fig.cap='Observed S deposition for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
 ### plot the valuebar for observed CMAQ S deposition
-b <- b+(b*0.05) # new (loosely based on 20/50/80)
+b <- b + (b * 0.05) # new (loosely based on 20/50/80)
 plot_valuebar(pick = rx(), brk=b, select='s',
               xlab=expression(S~deposition~'('*kg~ha^-1~yr^-1*')'))
 ```
@@ -362,7 +362,6 @@ if(len < 2) {
                              aggregate(fmla_s, data=x, f)),
                      error=function(e)return(NULL))
     has_ttest <- TRUE
-    
     ### if ttests failed then cancel ttests
     if (is.null(t1) & is.null(t3)) {
       has_ttest <- FALSE
@@ -569,16 +568,35 @@ rm(get_n_per_grp, plot_ci, len, x, u, f, t1, t3, tab1, tab3, ylb_n, ylb_s, fmla_
              adj=c(0.5,-1), lab='', lwd=2, cex=0.7, font=2)    
   }
 }
-### error catch -- dont plot if valid name not in shapefile
-`try_map` <- function() {
-     tryCatch(map_points(pick = rx(), pts=d, shp=w, ras=dem),
-              error = function(e) {
-                   plot(1:10, 1:10, type='n', axes=FALSE, ann=FALSE)
-                   text(5,5,labels='Map not available',adj=c(0.5,0.5))
-              })
+### some wilderness areas too large to plot (memory overrun on server)
+too_big <- c(
+  'Oregon Islands Wilderness',
+  'Frank Church-River of No Return Wilderness',
+  'Kootznoowoo Wilderness',
+  'Boundary Waters Canoe Area Wilderness'
+  # 'Daniel J. Evans Wilderness' # <<--- AKA Olympic NP, should be ok
+)
+# error catch -- dont plot if shape too large to plot (server memory overrun)
+if (rx() %in% too_big) {
+  plot(1:10, 1:10, type='n', axes=FALSE, ann=FALSE)
+  text(5,5,labels='Map not available',adj=c(0.5,0.5))
+} else { # error catch -- dont plot if valid name not in shapefile
+    tryCatch(map_points(pick = rx(), pts=d, shp=w, ras=dem),
+           error = function(e) {
+             plot(1:10, 1:10, type='n', axes=FALSE, ann=FALSE)
+             text(5,5,labels='Map not available',adj=c(0.5,0.5))
+           })
 }
-try_map()
-# map_points(pick = rx(), pts=d, shp=w, ras=dem)
+# ### error catch -- dont plot if valid name not in shapefile
+# `try_map` <- function() {
+#      tryCatch(map_points(pick = rx(), pts=d, shp=w, ras=dem),
+#               error = function(e) {
+#                    plot(1:10, 1:10, type='n', axes=FALSE, ann=FALSE)
+#                    text(5,5,labels='Map not available',adj=c(0.5,0.5))
+#               })
+# }
+# try_map()
+# # map_points(pick = rx(), pts=d, shp=w, ras=dem)
 ```
 
 
@@ -639,7 +657,7 @@ get_tab(pick = rx(),
 
 # Critical loads exceedances
 
-Exceedances are the departure of raw or climate-adjusted lichen airscores from established lichen-based critical loads^[See **["Critical loads we used"](#critical-loads-we-used)** section.], expressed as the mean of a ten-year period.  Negative values indicate the "safety margin" below the critical load threshold, positive values indicate exceedance above the threshold. 
+Exceedances are the departure of raw or climate-adjusted lichen airscores from established lichen-based critical loads^[See **["Critical loads we used"](#critical-loads-we-used)** section.], expressed as the mean of a ten-year period.  Negative values indicate the "safety margin" below the critical load threshold, positive values indicate exceedance above the threshold.
 
 ## Nitrogen
 
@@ -721,7 +739,7 @@ spp_exp <- 4.01 + 25.81*log(n) # log-linear eqn
 
 Number of surveyed plots:   **`r n`**  
 Number of species observed: **`r spp_obs`**  
-Number of species expected: **`r round(spp_exp, 1)`** 
+Number of species expected: **`r round(spp_exp, 1)`**  
 
 \  
 
