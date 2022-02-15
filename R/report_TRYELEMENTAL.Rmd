@@ -1,0 +1,838 @@
+---
+title: \vspace{-1.5cm}{Wilderness Air Quality Values \break for `r input$x`}
+date: 'Report prepared: `r format(Sys.time(), "%d %B %Y")`'
+toccolor: 'black'
+header-includes:
+   - \usepackage{hyperref} \hypersetup{pdfstartview={XYZ null null 1.00}, colorlinks = true, linkcolor = red, urlcolor = red}
+   - \usepackage{float} \floatplacement{figure}{H}
+   - \usepackage[font=small,skip=0pt]{caption}
+   - \usepackage{wrapfig}
+   - \usepackage{booktabs}
+   - \usepackage{longtable}
+---
+
+```{r setup-options, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+options(knitr.kable.NA = '')
+has_ttest <- FALSE
+```
+
+```{r function-setup-functions, include=FALSE}
+### set graphical parameters
+`set_par` <- function (panels = 1, pty = 's', ...) {
+    mgp <- c(2, 0.4, 0)
+    mar <- c(4, 4, 0.5, 0.5)
+    oma <- c(0, 0, 0, 0)
+    auto_rowcol <- function(n = panels) {
+        if (n <= 3) 
+            c(1, n)
+        else if (n <= 6) 
+            c(2, (n + 1)%/%2)
+        else if (n <= 12) 
+            c(3, (n + 2)%/%3)
+        else c(ceiling(n/(nr <- ceiling(sqrt(n)))), nr)
+    }
+    mfrow <- auto_rowcol()
+    if (panels > 4) 
+        panels <- 4
+    switch(as.character(panels), `4` = par(mfrow = mfrow, 
+        mgp = mgp, mar = mar, pty = pty, oma = oma, bty = 'L', 
+        las = 1, cex.lab = 1.2, tcl = -0.2, ...), `3` = par(mfrow = mfrow, 
+        mgp = mgp, mar = mar, pty = pty, oma = oma, bty = 'L', 
+        las = 1, cex.lab = 1.4, cex.axis = 1.2, tcl = -0.2, ...), 
+        `2` = par(mfrow = mfrow, mgp = mgp, mar = mar, 
+            pty = pty, oma = oma, bty = 'L', las = 1, cex.axis = 0.85, 
+            tcl = -0.2, ...), `1` = par(mfrow = mfrow, 
+            mgp = mgp, mar = mar, pty = pty, oma = oma, bty = 'L', 
+            las = 1, cex.axis = 0.85, tcl = -0.2, ...))
+}
+### get years of sampling
+`get_years` <- function (pick, ...) {
+        rng <- range(d[d$wa==pick, 'year'], na.rm=TRUE)  ### <<--------------------
+        if (any(!is.finite(rng))) c(NA,NA) else rng
+}
+### get recent decade
+`get_recent_decade` <- function (pick, ...) {
+     s <- sort(unique(a[a$warea==pick, 'tenyr']))
+     s <- s[length(s)]
+     if (any(!is.finite(s))) c(NA) else s
+}
+### get number of plots
+`get_n` <- function (pick, ...) {
+        n <- unique(a[a$warea==pick, 'n_plots'])
+        if (any(!is.finite(n))) c(NA) else n
+}
+### table function with 5-y mean
+`get_tab` <- function (pick, xvar, col.names, caption, format){
+        tab <- a[which(a$warea==pick), xvar]
+        if (missing(col.names)) col.names <- xvar
+        if (missing(caption))   caption   <- NULL
+        if (missing(format))    format    <- 'pandoc'
+        j   <- xvar[xvar != 'tenyr'] # dont consider year column
+        tab <- tab[rowSums(is.na(tab[,j])) != ncol(tab[,j]),]
+        tab[tab %in% c('NA','***NA***','NaN','***NaN***')] <- NA 
+        knitr::kable(x         = tab,
+                     format    = format,
+                     row.names = F,
+                     align = c('l', rep('r',NCOL(tab)-1)),
+                     longtable = T,
+                     booktabs  = T,
+                     caption   = caption,
+                     col.names = col.names)
+}
+```
+
+\vspace*{\fill}
+\begin{wrapfigure}{l}{1.8cm}
+\includegraphics{usfs.png}
+\end{wrapfigure}
+
+\  
+
+Air Resource Management Program  
+USDA Forest Service  
+1400 Independence Ave SW  
+Washington, DC 20250  
+
+\  
+
+\newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+
+# Why monitor lichens?
+
+## Sensitive responses
+
+Air quality can be gauged by monitoring changes in “sensitive receptors” like epiphytic macrolichens.  Lichens are impacted by air pollutants and therefore indicate changing conditions.  Elemental content in lichen tissues can reveal how much atmospheric deposition comes from harmful pollutants like oxidized nitrogen (NO$_x$), reduced nitrogen (NH$_x$) and oxidized sulfur (SO$_x$).  These substances accumulate in lichen tissues, which tell the tale of recent pollution.
+
+Because each species also has a unique pollution tolerance, we can calculate each species' optimum deposition value, and the community-mean "airscore" across all species at a site.  This relies on nationally-consistent FHM/FIA surveys of lichen communities.  Air-quality metrics based on multiple co-occurring species are more robust than tracking any single species alone.
+
+## Ecological functions
+
+\begin{wrapfigure}{r}{5.0cm}
+\includegraphics{bothlichens.png}
+\end{wrapfigure}
+
+Lichens are commonly divided into "functional groups" based on ecological functions: three common groups are forage lichens, cyanolichens and matrix lichens.
+
+__*Forage lichens*__ (including "old-man's beard" and "witches' hair" lichens) provide food, nesting materials and suitable habitat for many animals (from insects to amphibians to small mammals).   Large ungulates like deer, elk or caribou may depend on forage lichens to eat during lean winter months.  Loss of these pollution-sensitive lichens might have implications for the wildlife that depend on them.
+
+__*Cyanolichens*__ (including "lungwort" lichens) contain cyanobacterial partners that convert nitrogen from the air into a form which forest vegetation can absorb -- when cyanolichens fall to the forest floor and release this nitrogen, they serve as "forest fertilizer"!  Cyanolichens are among the most intolerant of poor air quality, so their absence may indicate deteriorating conditions.
+
+__*Matrix lichens*__ are any not included as forage or cyanolichens.  They are often more pollution-tolerant than those two groups, and perform an array of ecosystem functions.  These functions include rainfall interception, water cycle buffering, animal habitat, and bioindication of forest health.
+
+Changes in lichen communities are informative -- losses of lichen functional groups can indicate declines in the ecosystem functions that they provide.
+
+
+## Informative for management 
+
+The USFS uses lichen information to comply with Clean Air Act responsibilities for Class-I Wilderness (in reviewing state permits for Prevention of Significant Deterioration, and for state implementation plans under the Regional Haze Rule).  USFS also uses lichens to assess impacts due to exceedances of National Ambient Air Quality Standards (NAAQS) in NEPA, for Forest Planning, and for Wilderness Stewardship Performance reporting.  Lichens also inform USFS national-scale assessments like the Terrestrial Condition Assessment, Watershed Condition Framework, and Wilderness Character Monitoring.
+
+
+\newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+
+<!-- # Overview -->
+
+<!-- __*Evaluating status and trends in air quality and terrestrial condition using lichen WAQVs*__ -->
+
+<!-- This report uses the __*Lichen Wilderness Air Quality Value (WAQV)*__ to indicate status and trends in terrestrial ecosystem condition in `r input$x`.  This WAQV meets Wilderness Stewardship Performance reporting requirements for the Air Element.  -->
+
+<!-- Fertilizing and acidifying air pollutants alter soil and water chemistry, which can change the diversity and composition of microbes, invertebrates, vegetation and wildlife. Together with ozone and air toxics (not reported here) they are the air pollutants most likely to harm terrestrial and aquatic wilderness ecosystems.  -->
+
+<!-- Because most harm occurs as pollutants are deposited to the environment, air pollution levels and ecosystem responses typically use units of deposition, i.e., kilograms of __*total nitrogen*__ (fertilizing pollution) or __*total sulfur*__ (acidifying pollution) per hectare per year.  The short way to denote these units is kg N ha^-1^ y^-1^ or kg S ha^-1^ y^-1^. -->
+
+<!-- Ecosystem responses to air pollution can be quantified by single-species measures (e.g., growth or mortality), or by community measures (e.g., richness or community composition).  -->
+
+<!-- A __*critical load (CL)*__ is the amount of pollutant deposition below which no ecosystem harm occurs. CLs exist for soils, trees, herbs, and lichens. As air pollution surpasses a given CL, both the amount of __*exceedance*__ (kg ha^-1^ y^-1^) and the __*risk*__ of anticipated harm to ecosystems increase. As air quality improves, we expect reductions in CL exceedances and improvements in ecosystem responses. Thus, continued monitoring is a key tool for quantifying how air quality relates to ecosystem improvement, maintenance, or decline. -->
+
+<!-- Epiphytic macrolichens (large lichens growing on trees and shrubs) are a preferred indicator of air pollution. USFS Forest Inventory \& Analysis protocols have been used to survey lichens for air quality and climate status and trends across most of the forested United States. Because lichens rely on air for their nutrition and lack specialized tissues to exclude pollution, the number and type of species present reflects air quality conditions. Unlike the buffering effect of soils which protects rooted plants, lichens respond directly to the amount of pollution in the air. Thus lichen CLs are the proverbial canary in the coal mine. -->
+
+<!-- Lichens are also an integral part of forested ecosystems. They are composite organisms of a fungus and a green alga or a cyanobacterium or both. The fungus provides nutrients from the air and a protective environment, the algae photosynthesize, and the cyanobacteria fix nitrogen from the air and will also photosynthesize if no green alga is present. North America possesses >5400 species. Cyanobacterial lichens (__*cyanolichens*__) are highly preferred by invertebrates for their moderated moisture and higher nutrient content compared to green algal lichens, and cyanolichens contribute hugely to forest nutrient cycling. __*Forage lichens*__ are beard-like, shrubby species prized by ungulates, rodents, and birds for food and nesting materials. __*Matrix lichens*__ are all other leaf-like and shrubby species primarily used by invertebrates as habitat and birds for nesting. -->
+
+<!-- This report summarizes status and trends in air quality and its effects in 10-year increments including: -->
+<!-- * atmospheric deposition of nitrogen and of sulfur (CMAQ v5.02, lichen community airscores) -->
+<!-- * exceedances of lichen N and S critical loads -->
+<!-- * risks to lichen biodiversity, sensitive lichens, forage lichens, cyanolichens, and individual species.  -->
+<!-- Status is provided as a concern level: none, minimal, moderate, or high; trends as: no change, increasing, or decreasing.  -->
+<!-- See **[Further information](#further-information)** section for additional documentation of these methods. -->
+
+
+<!-- \newpage -->
+
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+
+# Summary for `r input$x`
+
+```{r years_and_plot_count}
+rng <- get_years(pick = rx())
+n   <- get_n(pick = rx())
+dec <- get_recent_decade(pick = rx())
+```
+
+Number of surveyed plots:   **`r n`**  
+Field sampling dates: **`r rng[1]` to `r rng[2]`**  
+Most recent ten-year sampling period: **`r dec`**  
+
+## Nitrogen snapshot
+
+```{r plot-plot_valuebar_N, warning=FALSE, message=FALSE, fig.height=2.25, fig.width=6.0, fig.cap='Observed N deposition (arrow) for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
+### plot the valuebar for observed CMAQ deposition
+`plot_valuebar` <- function(pick, brk=b, select='n', ...){
+     b      <- brk
+     x      <- a[which(a$warea==pick),
+                 paste0('cmaq_',select,'_3yroll.mean')]
+     arrlab <- 'OBSERVED\nCMAQ deposition'
+     if(all(is.na(x))) { # try lichen airscores if CMAQ is missing
+          x      <- a[which(a$warea==pick),
+                      paste0(select,'_airscore.mean')]
+          arrlab <- 'OBSERVED\nlichen airscores'
+     } 
+     if(all(is.na(x))) { # no more tries
+          x <- 999
+     }
+     obs  <- x[length(x)] # take most recent one
+     par(mar=c(4,0.3,0.3,0.3), las=1, tcl=-0.2, mgp=c(1.8,0.4,0))
+     n    <- 100
+     xseq <- seq(-0.5, 20.0, len=n)
+     plot(xseq, seq(1, 10, len=n), type='n', bty='n',
+          yaxt='n', ylab='', ylim=c(1,13.4), yaxs='i', xaxs='r', ...)
+     cc   <- viridis::inferno(5,begin=0.1,end=0.9,alpha=seq(0.7,1,len=5))
+     rect(-9,   -10, b[1], 20, col=cc[1], border=NA)
+     rect(b[1], -10, b[2], 20, col=cc[2], border=NA)
+     rect(b[2], -10, b[3], 20, col=cc[3], border=NA)
+     rect(b[3], -10, b[4], 20, col=cc[4], border=NA)
+     rect(b[4], -10, 99,   20, col=cc[5], border=NA)
+     text(x=b[1] - 0.5*(b[1]-(-1)), y=13.1, 'Acceptable', pos=1, cex=0.6)
+     text(x=b[2] - 0.5*(b[2]-b[1]), y=13.1, 'Marginal', pos=1, cex=0.6)
+     text(x=b[3] - 0.5*(b[3]-b[2]), y=13.1, 'Concerning', pos=1, cex=0.6)
+     text(x=b[4] - 0.5*(b[4]-b[3]), y=13.1, 'Poor', pos=1, cex=0.6)
+     text(x=21   - 0.5*(21-b[4]),   y=13.1, 'Very poor', pos=1, cex=0.6)
+     if (obs >= 999) {
+          text(x=10, y=10, 'No data available...', pos=1, cex=0.7, font=2)
+     } else if (obs > 20 & obs < 999) {
+          arrows(20.2, 6.5, 20.2, 1, length=0.20, angle=15, lwd=3, col=1)
+          text(x=18.8, y=10, arrlab, pos=1, cex=0.7, font=2)
+     } else {
+          arrows(obs, 6.5, obs, 1, length=0.20, angle=15, lwd=3, col=1)
+          text(x=obs, y=10, arrlab, pos=1, cex=0.7, font=2)
+     }
+}
+b <- c(2.5, 6, 9.9, 14) # loosely based on 20/50/80
+plot_valuebar(pick = rx(), brk=b, select='n',
+              xlab=expression(N~deposition~'('*kg~ha^-1~yr^-1*')'))
+```
+
+\  
+
+## Sulfur snapshot
+
+```{r plot_valuebar_S, warning=FALSE, message=FALSE, fig.height=2.25, fig.width=6.0, fig.cap='Observed S deposition for the most recent 10-year sample period, in relation to levels of concern.  Levels of concern (Acceptable, Marginal, Concerning, Poor, Very poor) are defined by the expected decline of sensitive lichens (0, 0-20, 20-50, 50-80, and >80 percent declines established for critical loads).'}
+### plot the valuebar for observed CMAQ S deposition
+b <- b + (b * 0.05) # new (loosely based on 20/50/80)
+plot_valuebar(pick = rx(), brk=b, select='s',
+              xlab=expression(S~deposition~'('*kg~ha^-1~yr^-1*')'))
+```
+
+
+\newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+## Area map
+
+```{r plot-map, fig.height=6.5, fig.width=6.49, fig.cap='Local area map.  Red outline is Wilderness boundary, black points are survey plot locations, shaded contours are terrain elevations above sea level.  Boundaries are approximate.', warning=FALSE}
+###  map wilderness boundary and sampling locations
+`map_points` <- function (pick=pick, pts=d, shp=w, ras=dem, 
+                          lwd.cont=1, ...) {
+  aea_prj <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5
+        +lon_0=-110 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
+  trg_prj <- projection(shp)
+  shp  <- shp[shp$NAME == pick,]  # select your wilderness
+  pts  <- pts[pts$wa == pick,]    # select your Wilderness
+  if(all(is.na(pts$lon)) | all(is.na(pts$lon))) {
+    e <- extent(shp) * 1.25
+    has_points <- FALSE
+  } else {
+    has_points <- TRUE
+    `make_xy` <- function(xy, crs, ...){
+      xy <- as.data.frame(xy)
+      xy <- xy[!(is.na(xy$lon) | is.na(xy$lat)),] # rm NAs
+      coordinates(xy) <- ~lon+lat
+      proj4string(xy) <- CRS('+init=epsg:4269') # NAD83 dec degree
+      return(spTransform(xy, crs))
+    }
+    ppts <- make_xy(pts, crs=trg_prj)
+    near <- c(rgeos::gDistance(spTransform(ppts, CRS(aea_prj)),
+                               spTransform(shp, CRS(aea_prj)),
+                               byid=T) < 3000) # reject pts > 3 km
+    ppts <- ppts[near,]
+    e <- cbind(matrix(extent(shp)),matrix(extent(ppts)))
+    e <- c(min(e[1,]),max(e[2,]),min(e[3,]),max(e[4,])) # combined ext
+    `haversine` <- function(loc1, loc2) { # geographic distance
+      lat1 <- loc1[1] * pi / 180
+      lon1 <- loc1[2] * pi / 180
+      lat2 <- loc2[1] * pi / 180
+      lon2 <- loc2[2] * pi / 180
+      R    <- 6371.0  # avg earth radius [km]
+      dlat <- lat2 - lat1
+      dlon <- lon2 - lon1
+      a <- sin(dlat/2)^2 + cos(lat1) * cos(lat2) * sin(dlon/2)^2
+      c <- 2 * atan2(sqrt(a), sqrt(1-a))
+      return(R * c)
+    }
+    dy <- haversine(c(e[3],e[1]), c(e[4],e[1])) # kilometers y-axis
+    dx <- haversine(c(e[3],e[1]), c(e[3],e[2])) # kilometers x-axis
+    e  <- extent(e)
+    if (dy > dx) {
+      e[1:2] <- matrix(e * dy/dx)[1:2,] # expand x
+    } else {
+      e[3:4] <- matrix(e * dx/dy)[3:4,] # expand y
+    }
+    dx <- as.numeric( # how large a scale bar to make?
+      as.character(
+        cut(dx,breaks=c(0,5,50,200,Inf),labels=c(1,5,10,50),incl=T)
+      )
+    )
+    e  <- extent(e) * 1.25 # slight expansion
+  }
+  ras <- disaggregate(crop(ras, e), 10, method='bilinear')
+  ### custom function for filled contours....
+  `fillcont` <- function (x, maxpixels = 1e+05, ...) {
+    `fc` <-  function (
+      x = seq(0, 1, length.out = nrow(z)),
+      y = seq(0, 1, length.out = ncol(z)),
+      z,
+      xlim = range(x, finite = TRUE),
+      ylim = range(y, finite = TRUE),
+      zlim = range(z, finite = TRUE),
+      levels = pretty(zlim, nlevels),
+      nlevels = 20,
+      color.palette = function(n) viridis::viridis(n,begin=0,end=0.9),
+      col = color.palette(length(levels) - 1), ...) {
+      if (missing(z)) {
+        if (!missing(x)) {
+          if (is.list(x)) {
+            z <- x$z
+            y <- x$y
+            x <- x$x
+          }
+          else {
+            z <- x
+            x <- seq.int(0, 1, length.out = nrow(z))
+          }
+        }
+        else stop("no 'z' matrix specified")
+      }
+      else if (is.list(x)) {
+        y <- x$y
+        x <- x$x
+      }
+      if (any(diff(x) <= 0) || any(diff(y) <= 0))
+        stop("increasing 'x' and 'y' values expected")
+      plot.new()
+      plot.window(xlim, ylim, "", xaxs = "i", yaxs = "i", asp = NA)
+      .filled.contour(x, y, z, levels, col)
+    }
+    x <- sampleRegular(x, maxpixels, asRaster = T, useGDAL = T)
+    X <- xFromCol(x, 1:ncol(x))
+    Y <- yFromRow(x, nrow(x):1)
+    Z <- t(matrix(getValues(x), ncol = x@ncols, byrow=T)[nrow(x):1,])
+    lonlat <- couldBeLonLat(x, warnings = FALSE)
+    asp <- list(...)$asp
+    if (is.null(asp)) {
+      if (lonlat) {
+        ym <- mean(c(x@extent@ymax, x@extent@ymin))
+        asp <- 1/cos((ym * pi)/180)
+      }
+      else {
+        asp <- 1
+      }
+      fc(x = X, y = Y, z = Z, asp = asp, ...)
+    }
+    else {
+      fc(x = X, y = Y, z = Z, ...)
+    }
+  }
+  fillcont(ras, nlevels=20, lwd=lwd.cont)
+  plot(shp, col='transparent', border='red', add=T, lwd=2)
+  if (has_points) {
+    points(ppts, pch=16, col='#000000', cex=1)
+    scalebar(d=dx, xy=c(e[1] + abs(diff(e[1:2]))*0.05,
+                        e[3] + abs(diff(e[3:4]))*0.08),
+             type='bar', divs=2, below=paste0('\n', dx, ' km'),
+             adj=c(0.5,-1), lab='', lwd=2, cex=0.7, font=2)    
+  }
+}
+### some wilderness areas too large to plot (memory overrun on server)
+too_big <- c(
+  'Oregon Islands Wilderness',
+  'Frank Church-River of No Return Wilderness',
+  'Kootznoowoo Wilderness',
+  'Boundary Waters Canoe Area Wilderness'
+  # 'Daniel J. Evans Wilderness' # <<--- AKA Olympic NP, should be ok
+)
+# error catch -- dont plot if shape too large to plot (server memory overrun)
+if (rx() %in% too_big) {
+  plot(1:10, 1:10, type='n', axes=FALSE, ann=FALSE)
+  text(5,5,labels='Map not available',adj=c(0.5,0.5))
+} else { # error catch -- dont plot if valid name not in shapefile
+    tryCatch(map_points(pick = rx(), pts=d, shp=w, ras=dem),
+           error = function(e) {
+             plot(1:10, 1:10, type='n', axes=FALSE, ann=FALSE)
+             text(5,5,labels='Map not available',adj=c(0.5,0.5))
+           })
+}
+```
+
+
+\newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+
+# Wilderness Character Monitoring (WCM) results
+
+Lichen responses are used in **Wilderness Character Monitoring (WCM)** across all agencies.  According to the Wilderness Character Monitoring Technical Guide (**[Landres et al. 2020:197-202](https://www.fs.fed.us/rm/pubs_series/rmrs/gtr/rmrs_gtr406.pdf){target="_blank"}**), lichens are one measure of the "Air and Water" indicator of "Natural Quality" in Wilderness areas.  Trends in lichen airscores are measured by a statistical _t_-test comparing a pair of 10-y intervals, when data are available.
+
+```{r check_ttest, include=FALSE}
+x   <- d[d$wa==rx(), ]
+u   <- sort(unique(na.omit(x[,'tenyr']))) # get unique time periods
+len <- length(u)
+if(len < 2) {
+  has_ttest <- FALSE
+} else {
+  u <- u[(len-1):(len)]   # take *most recent* two periods
+  x <- droplevels(x[x$tenyr %in% u,,drop=T])
+  x <- x[order(x$tenyr), ]
+  ### either tenyr have *ALL* NA? (ttest still works if *SOME* NA)
+  `f` <- function(k) all(is.na(k))
+  ### control logic to select CMAQ > AIRSCORE > NONE (nitrogen)
+  if (!any(tapply(x$cmaq_n_3yroll, list(x$tenyr), f))) {
+    fmla_n <- as.formula(cmaq_n_3yroll ~ tenyr)
+  } else if (!any(tapply(x$n_airscore, list(x$tenyr), f))) {
+    fmla_n <- as.formula(n_airscore ~ tenyr)
+  } else {
+    fmla_n <- NULL
+  }
+  ### control logic to select CMAQ > AIRSCORE > NONE (sulfur)
+  if (!any(tapply(x$cmaq_s_3yroll, list(x$tenyr), f))) {
+    fmla_s <- as.formula(cmaq_s_3yroll ~ tenyr)
+  } else if (!any(tapply(x$s_airscore, list(x$tenyr), f))) {
+    fmla_s <- as.formula(s_airscore ~ tenyr)
+  } else {
+    fmla_s <- NULL
+  }
+  ### ensure minimum sample size
+  `get_n_per_grp` <- function (x, na.rm = TRUE) {
+    n  <- length(x) - sum(is.na(x))
+    return(c(n=n))
+  }
+  n_n <- tryCatch(aggregate(fmla_n, data=x, get_n_per_grp),
+                  error=function(e) return(NULL))
+  n_s <- tryCatch(aggregate(fmla_s, data=x, get_n_per_grp),
+                  error=function(e) return(NULL))
+  ### control logic, if both are NULL or too-small sample-size, 
+  ###     then dont do the ttests
+  if ((is.null(fmla_n) & is.null(fmla_s)) | 
+      (any(n_n[,2] < 2) & any(n_s[,2] < 2))) {
+    has_ttest <- FALSE
+  } else {
+    ### UNPAIRED 2-sample ttest (plots NOT paired...)
+    t1 <- tryCatch(t.test(fmla_n,data=x),
+                   error=function(e)return(NULL))
+    t3 <- tryCatch(t.test(fmla_s,data=x),
+                   error=function(e)return(NULL))
+    ### descriptive summary table
+    `f` <- function (x, na.rm = TRUE) {
+      if (!is.numeric(x)) return(NULL)
+      m  <- mean(x, na.rm = na.rm)
+      s  <- stats::sd(x, na.rm = na.rm)
+      na <- sum(is.na(x))
+      n  <- length(x) - na
+      se <- s/sqrt(n - 1)
+      ci <- 1.96 * se
+      return(c(mean=round(m,3), ci=round(ci,3), n=n))
+    }
+    tab1 <- tryCatch(do.call(data.frame, 
+                             aggregate(fmla_n, data=x, f)),
+                     error=function(e)return(NULL))
+    tab3 <- tryCatch(do.call(data.frame, 
+                             aggregate(fmla_s, data=x, f)),
+                     error=function(e)return(NULL))
+    has_ttest <- TRUE
+    ### if ttests failed then cancel ttests
+    if (is.null(t1) & is.null(t3)) {
+      has_ttest <- FALSE
+    }
+  }
+}
+```
+
+`r if(has_ttest) { paste0('## Significant trends\n\nFrom the decade ', u[1], ' to ', u[2], ', a two-sample _t_-test revealed ', ifelse(t1$p.value < 0.05,'a ','NO '), 'SIGNIFICANT trend in N deposition, and ', ifelse(t3$p.value < 0.05,'a ','NO '), 'SIGNIFICANT trend in S deposition. ', 'See figure for test results.') } else { paste0('Given available data, **this Wilderness did not have sufficient measurements** over time to conduct a _t_-test of lichen trends.\\newpage') }`
+
+```{r plot_ttest, eval=has_ttest, echo=FALSE, fig.width=6.5, fig.height=3.5, fig.cap='Results of _t_-tests evaluating air-quality trends over time.'}
+### PLOT
+`plot_ci` <- function (tab, mod, ylab, ...) {
+     nm   <- tab[,1]
+     y    <- tab[,2]
+     yci  <- tab[,3]
+     n    <- tab[,4]
+     x    <- 1:2
+     ylm  <- c(0, # min(c(y, y - yci), na.rm=T) - 0.4,
+               max(c(y, y + yci), na.rm=T) + 0.1)
+     if (all(is.infinite(ylm))) return(NULL)
+     if (anyNA(ylm)) { ylm[which(is.na(ylm))] <- NULL }
+     if (missing(ylab)) {
+          ylb <- expression(Air~score~(kg~ha^'-1'~y^'-1'))
+     } else {
+          ylb <- ylab
+     }
+     plot(x=x, y=tab[,2], pch=16, ylab=ylb, xlab='', xaxt='n',
+          xlim=c(0.4,2.6), ylim=ylm, ...)
+     xlb <- paste0(nm,'\n','n = ', n)
+     axis(1, at=x, labels=xlb, tick=F, line=1, cex.axis=0.9)
+     w <- 0.05
+     segments(x0=x,   x1=x,   y0=y-yci, y1=y+yci, lwd=1.75)
+     segments(x0=x-w, x1=x+w, y0=y+yci, y1=y+yci, lwd=1.75)
+     segments(x0=x-w, x1=x+w, y0=y-yci, y1=y-yci, lwd=1.75)
+     `add_text` <- function (x, y, labels, ...) {
+          text(x = graphics::grconvertX(x, from = "npc", to = "user"),
+               y = graphics::grconvertY(y, from = "npc", to = "user"),
+               labels = labels, adj = 0, ...)
+     }
+     add_text(0.05,0.19,
+              lab=paste0('t = ', formatC(round(mod$statistic,1),digits=3)),
+              cex=0.8)
+     add_text(0.05,0.12,
+              lab=ifelse(mod$p.value < 0.01, 'p < 0.01',
+                         paste0('p = ',formatC(round(mod$p.value,2),digits=4))),
+              cex=0.8)
+     add_text(0.05,0.05,
+              lab=paste0('Est. diff. = ',
+                         formatC(round(diff(mod$estimate),1),digits=2)),
+              cex=0.8)
+}
+### setup labeling
+if (grepl('cmaq', names(tab1)[2])) {
+     ylb_n <- expression(CMAQ~value~(kg~N~ha^'-1'~y^'-1'))
+} else if (grepl('airscore', names(tab1)[2])) {
+     ylb_n <- expression(N~air~score~(kg~N~ha^'-1'~y^'-1'))
+} else {
+     ylb_n <- NA
+}
+if (grepl('cmaq', names(tab3)[2])) {
+     ylb_s <- expression(CMAQ~value~(kg~S~ha^'-1'~y^'-1'))
+} else if (grepl('airscore', names(tab3)[2])) {
+     ylb_s <- expression(S~air~score~(kg~S~ha^'-1'~y^'-1'))
+} else {
+     ylb_s <- NA
+}
+### plot
+set_par(2)
+par(mgp=c(1.3,0.4,0))
+try(plot_ci(tab1, t1, ylab=ylb_n), silent=TRUE)
+try(plot_ci(tab3, t3, ylab=ylb_s), silent=TRUE)
+rm(get_n_per_grp, plot_ci, len, x, u, f, t1, t3, tab1, tab3, ylb_n, ylb_s, fmla_n, fmla_s)
+```
+
+`r if(has_ttest) {"Power analysis: a _t_-test would require _n_ = 17 plots per time interval to detect a change of 1 kg ha^-1^ y^-1^ with 80\\% probability.\\newpage"}`
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+# Wilderness Stewardship Performance (WSP) results
+
+Lichen responses are used in **Wilderness Stewardship Performance (WSP)** in the US Forest Service.  According to the Wilderness Stewardship Performance Guidebook (**[2020:22-25](https://www.wilderness.net/NWPS/documents/FS/WSP-Guidebook_v2020.1.pdf){target="_blank"}**), lichens are a "sensitive receptor" of the "Air Quality Values" (AQVs) element in Wilderness areas.  Two indicators of Wilderness AQVs are 1) lichen airscores, and 2) exceedances of lichen-based critical loads.  We report 10-y means because the lichen plots are revisited each decade.
+
+## Indicator: Airscores
+
+Airscores are the "average" position of species along an air quality gradient.  Technically, these are the community-weighted mean of species' optima, where optima are defined as the value of N or S deposition (kg ha^-1^ y^-1^) at which each species was most frequently detected in USFS surveys.  Airscores represent the collective pollution tolerance of co-occurring species: "clean" sites have fairly low airscores driven by more pollution-intolerant species, while "polluted" sites have higher airscores driven by pollution-tolerant ones.  We report both raw and climate-adjusted airscores.  
+
+### Nitrogen airscores
+
+<!-- ### N: mean deposition -->
+```{r table_n_site}
+get_tab(pick = rx(), 
+        xvar=c('tenyr','n_airscore.mean','nadj.mean','cmaq_n_3yroll.mean'), 
+        col.names=c('Ten-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
+        caption= 'Site scores for estimated nitrogen deposition (N), as a *mean* (kg ha^-1^ y^-1^).')
+```
+
+<!-- ### N: percentiles -->
+```{r table_n_site_perc}
+# get_tab(pick = rx(), 
+#         xvar=c('tenyr','p_n_airscore.mean','p_n_adj.mean','p_n_cmaq.mean'), 
+#         col.names=c('Ten-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
+#         caption= 'Site scores for estimated nitrogen deposition (N), as a *percentile* (0-100).')
+```
+
+### Sulfur airscores
+
+<!-- ### S: mean deposition -->
+```{r table_s_site}
+get_tab(pick = rx(), 
+        xvar=c('tenyr','s_airscore.mean','sadj.mean','cmaq_s_3yroll.mean'), 
+        col.names=c('Ten-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'), 
+        caption= 'Site scores for estimated sulfur deposition (S), as a *mean* (kg ha^-1^ y^-1^).')
+```
+
+<!-- ### S: percentiles -->
+```{r table_s_site_perc}
+# get_tab(pick = rx(), 
+#         xvar=c('tenyr','p_s_airscore.mean','p_s_adj.mean','p_s_cmaq.mean'), 
+#         col.names=c('Ten-year interval', 'Lichen airscore (raw)', 'Lichen airscore (adj)', 'CMAQ model'),
+#         caption= 'Site scores for estimated sulfur deposition (S), as a *percentile* (0-100).')
+```
+
+
+\newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+## Indicator: Critical loads exceedances
+
+Exceedance is the degree to which locally observed deposition is above or below established  **[lichen-based critical loads](#critical-loads-we-used)**.  Negative values indicate the "safety margin" below the critical load threshold, positive values indicate the amount of exceedance above the threshold.
+
+### Nitrogen exceedances
+
+<!-- ### N exceedance: raw lichen airscores -->
+```{r table_exceedance_n_A}
+get_tab(pick = rx(), 
+        xvar=c('tenyr', 'n_raw_ex_sr.mean', 'n_raw_ex_sr_sens.mean',
+               'n_raw_ex_sr_forag.mean', 'n_raw_ex_sr_cyano.mean', 
+               'n_raw_ex_compn.mean'), 
+        col.names=c('Ten-year interval', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'CL exceedances for mean nitrogen deposition (kg N ha^-1^ y^-1^), based on raw lichen airscores.')
+```
+
+<!-- ### N exceedance: climate-adjusted lichen airscores -->
+```{r table_exceedance_n_B}
+get_tab(pick = rx(), 
+        xvar=c('tenyr', 'n_adj_ex_sr.mean',       
+               'n_adj_ex_sr_sens.mean',   
+               'n_adj_ex_sr_forag.mean',  
+               'n_adj_ex_sr_cyano.mean', 
+               'n_adj_ex_compn.mean'),
+        col.names=c('Ten-year interval', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'CL exceedances for mean nitrogen deposition (kg N ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
+```
+
+### Sulfur exceedances
+
+<!-- ### S exceedance: raw lichen airscores -->
+```{r table_exceedance_s_A}
+get_tab(pick = rx(), 
+        xvar=c('tenyr', 's_raw_ex_sr.mean', 's_raw_ex_sr_sens.mean',
+               's_raw_ex_sr_forag.mean', 's_raw_ex_sr_cyano.mean', 
+               's_raw_ex_compn.mean'), 
+        col.names=c('Ten-year interval', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'CL exceedances for mean sulfur deposition (kg S ha^-1^ y^-1^), based on raw lichen airscores.')
+```
+
+<!-- ### S exceedance: climate-adjusted lichen airscores -->
+```{r table_exceedance_s_B}
+get_tab(pick = rx(), 
+        xvar=c('tenyr', 's_adj_ex_sr.mean', 's_adj_ex_sr_sens.mean',   
+               's_adj_ex_sr_forag.mean','s_adj_ex_sr_cyano.mean', 
+               's_adj_ex_compn.mean'),
+        col.names=c('Ten-year interval', 'Richness', 'Sensitive richness', 
+                    'Forage lichen abund', 'Cyanolichen abund', 
+                    'Comm comp'), 
+        caption= 'CL exceedances for mean sulfur deposition (kg S ha^-1^ y^-1^), based on climate-adjusted lichen airscores.')
+```
+
+
+### Critical loads we used
+
+A critical load (CL) is the air pollutant deposition rate expected to result in harmful ecosystem changes.  We used critical loads from Table 3 in **[Geiser et al. (2019)](https://doi.org/10.3390/d11060087){target="_blank"}**.  These critical loads are invariant to geography and so apply nationwide.  Critical loads in this table are the deposition levels at which we expect a $\geq20\%$ decrease in the richness or abundance of the given lichen metric.
+
+```{r critical_loads_tab}
+tab <- data.frame(Metric = c('Species richness',
+                             'Sensitive species richness',
+                             'Forage lichen abundance',
+                             'Cyanolichen abundance',
+                             'Comm composition shifts'),
+                  Ndep = c(3.5, 3.1, 1.9, 1.3, 1.5),
+                  Sdep = c(6.0, 2.5, 2.6, 2.3, 2.7))
+knitr::kable(tab, format='pandoc', row.names = F, longtable = T,
+             booktabs  = T,
+             caption   = 'Critical loads used in this report (kg ha^-1^ y^-1^).',
+             escape    = F,
+             col.names = c('Lichen metric', 'N deposition', 'S deposition'))
+```
+
+<!-- See the articles:   -->
+
+<!-- >Geiser, L.H., P.R. Nelson, S. Jovan, H.T. Root, and C.C. Clark. 2019. Assessing ecological risks from atmospheric deposition of nitrogen and sulfur to US forests using epiphytic macrolichens. _Diversity_ 11 (87):1-29. [doi:10.3390/d11060087](https://doi.org/10.3390/d11060087){target="_blank"}   -->
+
+<!-- Geiser, L.H., H.T. Root, R.J. Smith, S. Jovan, L. St. Clair, and K.L. Dillman. 2021. Lichen-based critical loads for deposition of nitrogen and sulfur in US forests. Environmental Pollution 291: 118187. [doi:10.1016/j.envpol.2021.118187](https://doi.org/10.1016/j.envpol.2021.118187){target="_blank"} -->
+
+<!-- \   -->
+
+
+
+\newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+# Lichen species observed
+
+## Sampling completeness
+
+```{r run-species-completeness}
+`get_richness` <- function (pick, ...) {
+  NROW(s[[which(names(s) == pick)]])
+}
+spp_obs <- get_richness(pick = rx())
+spp_exp <- 4.01 + 25.81*log(n) # log-linear eqn
+```
+
+Number of surveyed plots:   **`r n`**  
+Number of species observed: **`r spp_obs`**  
+Number of species expected: **`r round(spp_exp, 1)`**  
+
+\  
+
+```{r plot-sampling-completeness, fig.height=2.75, fig.cap='Species accumulation curve.  Expected value is based on a species accumulation curve (the line) where the expected number of species $y$ depends on sampling $x$ new plots: $y = 4.01 + 25.81 \\times log(x)$.'}
+x <- 1:2500                              # n plots sampled
+y <- 4.01 + 25.81*log(x)                 # n species expected
+set_par(1)
+plot(x, y, type='l', log='x', xaxt='n', xlim=c(1,2500),
+     xlab=bquote(Plots~sampled~(log[10]~scale)),
+     ylab='Species expected')
+atx  <- outer(1:9, 10^(0:3))
+labx <- ifelse(log10(atx) %% 1 == 0, atx, NA)
+axis(1, at=atx, labels=labx, las=1)
+lines(rep(n,2), c(spp_exp,spp_obs))
+points(n, spp_exp, pch=21, cex=1.2, bg='white')
+points(n, spp_obs, pch=16, cex=1.2)
+legend('topleft', pch=c(16,21), bty='n', cex=0.7, pt.cex=1.0,
+       legend=c(paste0('Observed = ', spp_obs),
+                paste0('Expected = ', round(spp_exp,1))))
+```
+
+## Rare and pollution-sensitive species
+
+```{r species-rare-sensitive}
+`get_natureserve` <- function (pick, ...) {
+  tab    <- s[[which(names(s) == pick)]]
+  rich   <- NROW(tab)
+  nsens  <- round(sum(tab$n_class == 'oligotroph') / 
+                    sum(tab$n_class != '') * 100, 1)
+  ssens  <- round(sum(tab$s_class == 'sensitive')  / 
+                    sum(tab$s_class != '') * 100, 1)
+  atrisk <- sum(1 * grepl('1|2|3|Endanger|Concern|Threaten', 
+                          tab$consrv_stat))
+  list(rich=rich, nsens=nsens, ssens=ssens, atrisk=atrisk)
+}
+x <- get_natureserve(pick = rx())
+```
+
+Number of species observed in total: **`r x$rich`**  
+Number of species with 'at risk' conservation status: **`r x$atrisk`**  
+Percentage of rated species with 'sensitive (oligotroph)' N tolerance: **`r x$nsens`\%**  
+Percentage of rated species with 'sensitive' S tolerance: **`r x$ssens`\%**  
+
+## Species list
+
+**List of all macrolichens in plots at `r input$x` from `r rng[1]` to `r rng[2]`**.  True diversity is likely greater because plot footprints are just a fraction of total Wilderness area.  _Functional groups_ ('Fxl grp') are cyanolichens ('cyano') and forage lichens ('forage')(see **[descriptions](#why-monitor-lichens-ecological-functions)**).  _Sensitivity_ for each species ranges from low to high tolerance for nitrogen (oligo-, meso-, eutroph) and sulfur (sensitive, intermediate, tolerant).  _Critical loads_ ('CL') are deposition levels resulting in >20\% decrease in occurrence.  _Conservation_ rankings are from NatureServe (https://www.natureserve.org/) which assigns each species both a global (G) and state (S) rank on a scale of 1 to 5 (1=Critically imperiled; 2=Imperiled; 3=Vulnerable; 4=Apparently secure; 5=Secure).  Species considered 'at risk' here are those ranked by NatureServe as Critically Imperiled, Imperiled, or Vulnerable, and/or those ranked by COSEWIC as Endangered, Special Concern, or Threatened.
+
+
+```{r species_list}
+`get_tab_species` <- function (pick, ...) {
+  tab <- s[which(names(s) == pick)][[1]]
+  tab <- tab[order(tab$n_critload, tab$s_critload, tab$fxlgp),]
+  knitr::kable(x         = tab,
+               format    = 'markdown',  ### format = 'pandoc',
+               row.names = FALSE,
+               longtable = TRUE,
+               booktabs  = TRUE,
+               caption   = NULL,  ### 'Macrolichen species list.',
+               escape    = FALSE,
+               col.names = c('Species','Fxl grp','N sensitivity','N CL',
+                             'S sensitivity','S CL','Conservation')
+  )
+}
+get_tab_species(pick = rx())
+```
+
+
+
+
+
+
+
+
+
+\newpage
+
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+<!-- ####    ####    ####    ####    ####    ####    ####    ####    #### -->
+
+
+# Elemental concentrations
+
+Elemental content in lichen tissues is a proxy for deposition of harmful N- and S-containing pollutants, as well as heavy metals of concern for human health.  USFS has measured lichen elemental content on a subset of Wilderness plots.
+
+```{r tab-elemental}
+`get_tab_elemental` <- function (pick, ...) {
+  tab <- e[e$wa == pick, names(e) != 'wa'] 
+  if (NROW(tab) == 0) {
+    cat('Unfortunately, elemental data are not yet available for this Wilderness area.\n')
+  } else {
+    knitr::kable(x         = tab,
+                 format    = 'markdown',  ### format = 'pandoc',
+                 row.names = FALSE,
+                 longtable = TRUE,
+                 booktabs  = TRUE,
+                 caption   = 'Table of elemental concentrations in lichen tissues. Any taxa preceded by asterisk (*) are non-standard and should be interpreted with caution.  The number of samples is given by _n_.',
+                 escape    = FALSE,
+                 col.names = c('Year','Species','Cd (ppm)','Cr (ppm)','Cu (ppm)',
+                               'Hg (ppm)','Ni (ppm)','Pb (ppm)','Zn (ppm)', 
+                               'N (%)', 'S (%)', '_n_'),
+                 align = c('l', 'l', rep('c',NCOL(tab)-2))
+    )
+  }
+}
+try(get_tab_elemental(pick = rx()), silent=TRUE)
+```
+
+
+<!-- END -->
