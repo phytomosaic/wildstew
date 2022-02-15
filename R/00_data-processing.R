@@ -21,6 +21,12 @@ rm(list=ls())
 require(crs)
 require(ecole)
 
+### assumes all RAW data are in './data_contributed/'
+
+### create dir to hold clean data
+if (!dir.exists('./data/')) {
+        dir.create('./data/')
+}
 
 ### load and clean species occurrence data
 d <- read.csv('./data_contributed/MegaDbPLOT_2020.05.09.csv',
