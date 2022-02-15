@@ -1,6 +1,6 @@
 Package: wildstew
 Title: Wilderness Stewardship Performance Reporting 
-Version: 0.0.2-2020-12-18
+Version: 0.0.3-2022-02-15
 Authors@R: 
     person(given = "Robert",
            family = "Smith",
