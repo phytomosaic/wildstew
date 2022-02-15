@@ -1,4 +1,5 @@
 # wildstew
+
 Wilderness stewardship performance reporting.
 
 
@@ -14,7 +15,7 @@ Each Wilderness area managed by the USDA Forest Service is required to report an
 
 ## Where
 
-The live website is at: https://ecol.shinyapps.io/wildstew/
+The live website was previously at: https://ecol.shinyapps.io/wildstew/  This temporary site will be decommissioned in Spring 2022.
 
 
 ## Installation
